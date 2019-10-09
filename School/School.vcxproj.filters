@@ -1,0 +1,125 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="源文件\System">
+      <UniqueIdentifier>{8cd42944-58b2-4642-bde6-9761ba14697d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Admin">
+      <UniqueIdentifier>{a6c7c39c-3fd3-4155-901c-560e5c748f00}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\LogIn">
+      <UniqueIdentifier>{dc5461ad-8cde-43f3-ada8-e4b638e34555}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Student">
+      <UniqueIdentifier>{02e28dbf-d035-4e06-b0cf-cce1b77ce175}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Teacher">
+      <UniqueIdentifier>{33e4c9ab-a23a-4be6-a53c-f3e24898c154}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Support">
+      <UniqueIdentifier>{ae601bb5-1e4c-47d9-9c70-6cf87c748a98}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+    <None Include="res\School.rc2">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\School.ico">
+      <Filter>资源文件</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="School.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SchoolDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Students.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="admin.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Combo.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="NewPwd.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="NewUser.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Approval.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Teacher.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Support.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>源文件\System</Filter>
+    </ClCompile>
+    <ClCompile Include="Admin.cpp">
+      <Filter>源文件\Admin</Filter>
+    </ClCompile>
+    <ClCompile Include="NewUser.cpp">
+      <Filter>源文件\LogIn</Filter>
+    </ClCompile>
+    <ClCompile Include="School.cpp">
+      <Filter>源文件\LogIn</Filter>
+    </ClCompile>
+    <ClCompile Include="SchoolDlg.cpp">
+      <Filter>源文件\LogIn</Filter>
+    </ClCompile>
+    <ClCompile Include="Approval.cpp">
+      <Filter>源文件\Admin</Filter>
+    </ClCompile>
+    <ClCompile Include="NewPwd.cpp">
+      <Filter>源文件\LogIn</Filter>
+    </ClCompile>
+    <ClCompile Include="Combo.cpp">
+      <Filter>源文件\System</Filter>
+    </ClCompile>
+    <ClCompile Include="Students.cpp">
+      <Filter>源文件\Student</Filter>
+    </ClCompile>
+    <ClCompile Include="Teacher.cpp">
+      <Filter>源文件\Teacher</Filter>
+    </ClCompile>
+    <ClCompile Include="Support.cpp">
+      <Filter>源文件\Support</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="School.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
