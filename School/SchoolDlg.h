@@ -45,4 +45,8 @@ public:
 	afx_msg void OnBnClickedCmdnewuser();
 	CStatic Check4Wrod;
 	afx_msg void OnClose();
+	CButton RemID;
+	CButton RemPwd;
+	afx_msg void OnBnClickedRemid();
+	afx_msg void OnBnClickedRmepwd();
 };

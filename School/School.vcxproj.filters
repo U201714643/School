@@ -134,6 +134,9 @@
     <ClCompile Include="Support.cpp">
       <Filter>源文件\Support</Filter>
     </ClCompile>
+    <ClCompile Include="MySqlOperation.cpp">
+      <Filter>源文件\Support</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="School.rc">

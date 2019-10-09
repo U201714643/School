@@ -81,7 +81,11 @@ void NewPwd::OnBnClickedCmdok()
 		return;
 	}
 	if (strlen(bufNewPwd1) < 4) {
-		MessageBoxA("新密码至少四位");
+		MessageBoxA("新密码至少4位");
+		return;
+	}
+	if (strlen(bufNewPwd1) > 20) {
+		MessageBoxA("新密码至多20位");
 		return;
 	}
 	MySQLHostVariable host;

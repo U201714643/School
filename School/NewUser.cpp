@@ -133,7 +133,7 @@ void NewUser::OnBnClickedCmdok()
 		return;
 	}
 	if (strlen(No) > 14) {
-		MessageBoxA("学号至少14位");
+		MessageBoxA("学号至多14位");
 		return;
 	}
 	cTxtName.GetWindowTextA(Name, sizeof(Name));
@@ -141,9 +141,17 @@ void NewUser::OnBnClickedCmdok()
 		MessageBoxA("姓名至少2个汉字");
 		return;
 	}
+	if (strlen(Name) > 20) {
+		MessageBoxA("姓名至多10个汉字");
+		return;
+	}
 	cTxtPwd1.GetWindowTextA(Pwd1, sizeof(Pwd1));
 	if (strlen(Pwd1) < 4) {
 		MessageBoxA("密码长度至少4位");
+		return;
+	}
+	if (strlen(Pwd1) > 20) {
+		MessageBoxA("密码长度至多20位");
 		return;
 	}
 	cTxtPwd2.GetWindowTextA(Pwd2, sizeof(Pwd2));

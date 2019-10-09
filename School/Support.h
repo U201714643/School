@@ -47,6 +47,7 @@ typedef struct global {
 }global;
 
 int ValidIP(char * str);		//校验IP地址合法性
+char * RealChar(char * str);		//转换*、/符号为×、÷
 int PwdCode(char *s1, char *s2);	//用户名+密码编码
 int CloseMySQL(MySQLHostVariable * host);	//关闭MySQL连接
 int InitMySQL(MySQLHostVariable * host);	//初始化MySQL连接

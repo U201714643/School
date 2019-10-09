@@ -17,9 +17,11 @@
 #define new DEBUG_NEW
 #endif
 
-int GetMySQLsta(void);	//试连接MySQL数据库
-int GetName(char * Name, int len);	//读缓存用户名
+int GetMySQLsta(void);		//试连接MySQL数据库
 int SaveName(char * Name);	//缓存用户名
+int SavePwd(char * Pwd);	//缓存密码
+int GetName(char * Name, int len);	//读缓存用户名
+int GetPwd(char * Pwd, int len);	//读缓存密码
 int VerifyOperator(char * name, char * pwd);	//校验用户
 
 
@@ -43,6 +45,8 @@ void CSchoolDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EditPassword, TxtPwd);
 	DDX_Control(pDX, IDC_EditUser, TxtName);
 	DDX_Control(pDX, IDCmdLogin, CmdLogin);
+	DDX_Control(pDX, IDC_REMID, RemID);
+	DDX_Control(pDX, IDC_RMEPWD, RemPwd);
 }
 
 BEGIN_MESSAGE_MAP(CSchoolDlg, CDialogEx)
@@ -54,6 +58,8 @@ BEGIN_MESSAGE_MAP(CSchoolDlg, CDialogEx)
 	ON_BN_CLICKED(IDCmdLogin, &CSchoolDlg::OnBnClickedCmdlogin)
 	ON_BN_CLICKED(IDCmdNewUser, &CSchoolDlg::OnBnClickedCmdnewuser)
 	ON_WM_CLOSE()
+	ON_BN_CLICKED(IDC_REMID, &CSchoolDlg::OnBnClickedRemid)
+	ON_BN_CLICKED(IDC_RMEPWD, &CSchoolDlg::OnBnClickedRmepwd)
 END_MESSAGE_MAP()
 
 
@@ -69,9 +75,19 @@ BOOL CSchoolDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
-	char name[72];
-	GetName(name, sizeof(name));	//读缓存用户名
-	TxtName.SetWindowTextA(name);
+	//-------读之前保存的用户名密码-------
+	char buf[72];
+	GetName(buf, sizeof(buf));	//读缓存用户名
+	TxtName.SetWindowTextA(buf);
+	if (strlen(buf) != 0) {		//上次保存了用户名这次依然保存
+		RemID.SetCheck(true);
+	}
+	GetPwd(buf, sizeof(buf));	//读缓存用户名
+	TxtPwd.SetWindowTextA(buf);
+	if (strlen(buf) != 0) {		//上次保存了用户名这次依然保存
+		RemPwd.SetCheck(true);
+	}
+	//-------连接至数据库-------
 	int sta = GetMySQLsta();
 	if (sta != TRUE) {
 		MessageBoxA("数据库连接测试失败，请检查配置", "故障", MB_TOPMOST);
@@ -154,13 +170,32 @@ void CSchoolDlg::OnBnClickedCmdlogin()
 	PwdLength = strlen(PwdBuf);
 	//--------检验长度--------
 	if (NameLength < 4 || PwdLength < 4) {	//长度均至少为4
-		MessageBoxA("用户名、密码均至少含有2个汉字或4个英文字母（含数字）", "登录失败");
+		MessageBoxA("用户名、密码均至少含有2个汉字或4个英文字母（含数字）。", "登录失败");
+		return;		//不再访问数据库
+	}
+	else if (NameLength > 20 || PwdLength > 20) {	//长度均不超过20
+		MessageBoxA("用户名、密码长度均不超过10个汉字或20个英文字母（含数字）。", "登录失败");
 		return;		//不再访问数据库
 	}
 	//--------在数据库中查找用户--------
 	sta = VerifyOperator(UserBuf, PwdBuf);
 	if (sta == TRUE) {
-		CDialogEx::OnOK();
+		CDialogEx::OnOK();		//关掉当前窗口
+		//--------保存用户名、密码--------
+		//登陆成功才保存
+		if (RemID.GetCheck() == true) {	//选了才保存
+			SaveName(UserBuf);
+		}
+		else {	//没选则清空
+			SaveName("");
+		}
+		if (RemPwd.GetCheck() == true) {//选了才保存
+			SavePwd(PwdBuf);
+		}
+		else {	//没选则清空
+			SavePwd("");
+		}
+		//--------权限认证--------
 		if (gs.op.right == 0)			//未认证
 			MessageBoxA("学生已注册，尚未审批\n请待审批后再登录", "未审批学生");
 		else if (gs.op.right == 2)		//未认证
@@ -181,7 +216,7 @@ void CSchoolDlg::OnBnClickedCmdlogin()
 			MessageBoxA("未定义操作员类型", "登录无效");
 	}
 	else
-		MessageBoxA("登录失败，请核对用户名、密码", "登录失败");
+		MessageBoxA("登录失败，请核对用户名、密码。\n如遗忘密码请与管理员联系。", "登录失败");
 }
 
 
@@ -220,16 +255,32 @@ int GetMySQLsta(void) {	//试连接MySQL数据库
 int GetName(char * Name, int len) {	//读缓存用户名
 	char path[128]; //存放路径的变量	
 	GetModuleFileName(NULL, path, sizeof(path));     //获取当前进程已加载模块的文件的完整路径
-	memcpy(path + strlen(path) - 4, ".INI", 5);
+	memcpy(path + strlen(path) - 4, ".ini", 5);
 	GetPrivateProfileString("School", "UserName", "", Name, len, path);
+	return TRUE;
+}
+
+int GetPwd(char * Pwd, int len) {	//读缓存用密码
+	char path[128]; //存放路径的变量	
+	GetModuleFileName(NULL, path, sizeof(path));     //获取当前进程已加载模块的文件的完整路径
+	memcpy(path + strlen(path) - 4, ".ini", 5);
+	GetPrivateProfileString("School", "UserPwd", "", Pwd, len, path);
 	return TRUE;
 }
 
 int SaveName(char * Name) {	//缓存用户名
 	char path[128]; //存放路径的变量	
 	GetModuleFileName(NULL, path, sizeof(path));     //获取当前进程已加载模块的文件的完整路径
-	memcpy(path + strlen(path) - 4, ".INI", 5);
+	memcpy(path + strlen(path) - 4, ".ini", 5);
 	WritePrivateProfileStringA("School", "UserName", Name, path);
+	return TRUE;
+}
+
+int SavePwd(char * Pwd) {	//缓存密码
+	char path[128]; //存放路径的变量	
+	GetModuleFileName(NULL, path, sizeof(path));     //获取当前进程已加载模块的文件的完整路径
+	memcpy(path + strlen(path) - 4, ".ini", 5);
+	WritePrivateProfileStringA("School", "UserPwd", Pwd, path);
 	return TRUE;
 }
 
@@ -266,7 +317,6 @@ int VerifyOperator(char * name, char * password) {	//校验用户
 			else
 				strcpy_s(gs.op.GradeName, sizeof(gs.op.GradeName), row[4]);
 			gs.op.pwd = pwd;
-			SaveName(name);	//缓存用户名
 		}
 		else
 			sta = FALSE;
@@ -288,4 +338,20 @@ void CSchoolDlg::OnClose()
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	CDialogEx::OnCancel();
+}
+
+
+void CSchoolDlg::OnBnClickedRemid()
+{
+	if (RemID.GetCheck() == false) {
+		RemPwd.SetCheck(false);		//保存密码必须保存用户名
+	}
+}
+
+
+void CSchoolDlg::OnBnClickedRmepwd()
+{
+	if (RemPwd.GetCheck() == true) {
+		RemID.SetCheck(true);		//保存密码必须保存用户名
+	}
 }

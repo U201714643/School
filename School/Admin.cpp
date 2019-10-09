@@ -472,7 +472,7 @@ int Admin::ChMode(int mode) {//改变工作模式
 void Admin::OnBnClickedCmdok()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	ChMode(WMNone);
+	CDialogEx::OnOK();
 }
 
 int BatchAddQuestions(void) {
