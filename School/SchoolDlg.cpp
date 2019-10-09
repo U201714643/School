@@ -18,9 +18,9 @@
 #endif
 
 int GetMySQLsta(void);	//试连接MySQL数据库
-int GetName(char * Name,int len);	//读缓存用户名
+int GetName(char * Name, int len);	//读缓存用户名
 int SaveName(char * Name);	//缓存用户名
-int VerifyOperator(char * name,char * pwd);	//校验用户
+int VerifyOperator(char * name, char * pwd);	//校验用户
 
 
 global gs;	//定义且仅定义一个全局变量。
@@ -70,11 +70,11 @@ BOOL CSchoolDlg::OnInitDialog()
 
 	// TODO: 在此添加额外的初始化代码
 	char name[72];
-	GetName(name,sizeof(name));	//读缓存用户名
+	GetName(name, sizeof(name));	//读缓存用户名
 	TxtName.SetWindowTextA(name);
-	int sta=GetMySQLsta();
-	if(sta!=TRUE){
-		MessageBoxA("数据库连接测试失败，请检查配置","故障",MB_TOPMOST);
+	int sta = GetMySQLsta();
+	if (sta != TRUE) {
+		MessageBoxA("数据库连接测试失败，请检查配置", "故障", MB_TOPMOST);
 		CDialogEx::OnOK();
 	}
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -145,96 +145,96 @@ void CSchoolDlg::OnBnClickedCmdlogin()
 	int sta;	//状态标志
 	char UserBuf[72];
 	char PwdBuf[72];
-	int NameLength,PwdLength;
+	int NameLength, PwdLength;
 	//--------获得输入的用户名、密码--------
-	TxtName.GetWindowTextA(UserBuf,sizeof(UserBuf));
-	TxtPwd.GetWindowTextA(PwdBuf,sizeof(PwdBuf));
+	TxtName.GetWindowTextA(UserBuf, sizeof(UserBuf));
+	TxtPwd.GetWindowTextA(PwdBuf, sizeof(PwdBuf));
 	//--------获得它们的长度--------
-	NameLength=strlen(UserBuf);
-	PwdLength=strlen(PwdBuf);
+	NameLength = strlen(UserBuf);
+	PwdLength = strlen(PwdBuf);
 	//--------检验长度--------
-	if(NameLength<4||PwdLength<4){	//长度均至少为4
-		MessageBoxA("用户名、密码均至少含有2个汉字或4个英文字母（含数字）","登录失败");
+	if (NameLength < 4 || PwdLength < 4) {	//长度均至少为4
+		MessageBoxA("用户名、密码均至少含有2个汉字或4个英文字母（含数字）", "登录失败");
 		return;		//不再访问数据库
 	}
 	//--------在数据库中查找用户--------
-	sta=VerifyOperator(UserBuf,PwdBuf);
-	if(sta==TRUE){
+	sta = VerifyOperator(UserBuf, PwdBuf);
+	if (sta == TRUE) {
 		CDialogEx::OnOK();
-		if(gs.op.right==0)			//未认证
-			MessageBoxA("学生已注册，尚未审批\n请待审批后再登录","未审批学生");
-		else if(gs.op.right==2)		//未认证
-			MessageBoxA("教师已注册，尚未审批\n请待审批后再登录","未审批教师");
-		else if(gs.op.right==1){	//学生
-			Students frm;	
+		if (gs.op.right == 0)			//未认证
+			MessageBoxA("学生已注册，尚未审批\n请待审批后再登录", "未审批学生");
+		else if (gs.op.right == 2)		//未认证
+			MessageBoxA("教师已注册，尚未审批\n请待审批后再登录", "未审批教师");
+		else if (gs.op.right == 1) {	//学生
+			Students frm;
 			frm.DoModal();
 		}
-		else if(gs.op.right==3){	//教师
-			Teacher frm;	
+		else if (gs.op.right == 3) {	//教师
+			Teacher frm;
 			frm.DoModal();
 		}
-		else if(gs.op.right==9){	//管理员
+		else if (gs.op.right == 9) {	//管理员
 			Admin	FrmAdmin;
-			FrmAdmin.DoModal();		
+			FrmAdmin.DoModal();
 		}
 		else
-			MessageBoxA("未定义操作员类型","登录无效");
+			MessageBoxA("未定义操作员类型", "登录无效");
 	}
 	else
-		MessageBoxA("登录失败，请核对用户名、密码","登录失败");
+		MessageBoxA("登录失败，请核对用户名、密码", "登录失败");
 }
 
 
-int GetMySQLsta(void){	//试连接MySQL数据库
+int GetMySQLsta(void) {	//试连接MySQL数据库
 	MySQLHostVariable host;
 	MYSQL_RES *result;
-	int i,pwd,sta;
+	int i, pwd, sta;
 	char cmd[256];
-	for(i=0;i<4;i++)
+	for (i = 0; i < 4; i++)
 	{
-		sta=InitMySQL(&host);//连接MySQL数据库
-		if(sta==TRUE)
+		sta = InitMySQL(&host);//连接MySQL数据库
+		if (sta == TRUE)
 			break;
 	}
-	if(sta==TRUE){
+	if (sta == TRUE) {
 		//检查是否存在admin用户
-		mysql_query(&host.mysql,"Select `ID` From `Operator` Where `No`='admin' and `Right`='9'");
+		mysql_query(&host.mysql, "Select `ID` From `Operator` Where `No`='admin' and `Right`='9'");
 		result = mysql_store_result(&host.mysql);
-		if(result!=NULL){
-			i=(long)result->row_count;//总数
-			mysql_free_result(result);	
+		if (result != NULL) {
+			i = (long)result->row_count;//总数
+			mysql_free_result(result);
 		}
 		else
-			i=0;
-		if(i!=1){//如果admin用户不存在，则增加一个admin用户
-			pwd=PwdCode("admin","admin");
-			sprintf_s(cmd,sizeof(cmd),"Insert Into `Operator` Set `No`='admin',`user`='admin',`Grade`=0,"
-			"`Password`='%d',`Right`='9';",pwd);
-			mysql_query(&host.mysql,cmd);
+			i = 0;
+		if (i != 1) {//如果admin用户不存在，则增加一个admin用户
+			pwd = PwdCode("admin", "admin");
+			sprintf_s(cmd, sizeof(cmd), "Insert Into `Operator` Set `No`='admin',`user`='admin',`Grade`=0,"
+				"`Password`='%d',`Right`='9';", pwd);
+			mysql_query(&host.mysql, cmd);
 		}
 		CloseMySQL(&host);	//关闭MySQL连接	
 	}
 	return sta;
 }
 
-int GetName(char * Name,int len){	//读缓存用户名
+int GetName(char * Name, int len) {	//读缓存用户名
 	char path[128]; //存放路径的变量	
-	GetModuleFileName(NULL,path,sizeof(path));     //获取当前进程已加载模块的文件的完整路径
-	memcpy(path+strlen(path)-4,".INI",5);
-	GetPrivateProfileString("School","UserName","",Name,len,path);
+	GetModuleFileName(NULL, path, sizeof(path));     //获取当前进程已加载模块的文件的完整路径
+	memcpy(path + strlen(path) - 4, ".INI", 5);
+	GetPrivateProfileString("School", "UserName", "", Name, len, path);
 	return TRUE;
 }
 
-int SaveName(char * Name){	//缓存用户名
+int SaveName(char * Name) {	//缓存用户名
 	char path[128]; //存放路径的变量	
-	GetModuleFileName(NULL,path,sizeof(path));     //获取当前进程已加载模块的文件的完整路径
-	memcpy(path+strlen(path)-4,".INI",5);
-	WritePrivateProfileStringA("School","UserName",Name,path);
+	GetModuleFileName(NULL, path, sizeof(path));     //获取当前进程已加载模块的文件的完整路径
+	memcpy(path + strlen(path) - 4, ".INI", 5);
+	WritePrivateProfileStringA("School", "UserName", Name, path);
 	return TRUE;
 }
 
 
-int VerifyOperator(char * name,char * password){	//校验用户
+int VerifyOperator(char * name, char * password) {	//校验用户
 	MySQLHostVariable host;
 	MYSQL_RES *result;
 	MYSQL_ROW row;
@@ -242,34 +242,34 @@ int VerifyOperator(char * name,char * password){	//校验用户
 	int sta;	//状态标志
 	char buf[200];
 	int i;
-	sta=InitMySQL(&host);//连接MySQL数据库
-	if(sta==TRUE){
-		pwd=PwdCode(name,password);
-		sprintf_s(buf,sizeof(buf),"Select operator.`ID`,`Grade`,`No`,`Right`, grade.`Name` From `operator` "
-		"Left Join Grade ON operator.grade = grade.ID Where `User`='%s' And `Password`='%ld';",name,pwd);
-		mysql_query(&host.mysql,buf);
+	sta = InitMySQL(&host);//连接MySQL数据库
+	if (sta == TRUE) {
+		pwd = PwdCode(name, password);
+		sprintf_s(buf, sizeof(buf), "Select operator.`ID`,`Grade`,`No`,`Right`, grade.`Name` From `operator` "
+			"Left Join Grade ON operator.grade = grade.ID Where `User`='%s' And `Password`='%ld';", name, pwd);
+		mysql_query(&host.mysql, buf);
 		result = mysql_store_result(&host.mysql);
-		if(result!=NULL)
-			i=(long)result->row_count;//计数
+		if (result != NULL)
+			i = (long)result->row_count;//计数
 		else
-			i=0;
-		if(i==1){	
+			i = 0;
+		if (i == 1) {
 			//校验通过，将用户数据读入全局变量gs.op中
 			row = mysql_fetch_row(result);
-			gs.op.ID=atoi(row[0]);
-			gs.op.grade=atoi(row[1]);
-			strcpy_s(gs.op.No,sizeof(gs.op.No),row[2]);
-			gs.op.right=atoi(row[3]);
-			strcpy_s(gs.op.Name,sizeof(gs.op.Name),name);
-			if(row[4]==NULL)	//班级名称可能无效。例如教师没有所属班级
-				gs.op.GradeName[0]=0;	//这时候将班级名称设置为""字符串
+			gs.op.ID = atoi(row[0]);
+			gs.op.grade = atoi(row[1]);
+			strcpy_s(gs.op.No, sizeof(gs.op.No), row[2]);
+			gs.op.right = atoi(row[3]);
+			strcpy_s(gs.op.Name, sizeof(gs.op.Name), name);
+			if (row[4] == NULL)	//班级名称可能无效。例如教师没有所属班级
+				gs.op.GradeName[0] = 0;	//这时候将班级名称设置为""字符串
 			else
-				strcpy_s(gs.op.GradeName,sizeof(gs.op.GradeName),row[4]);
-			gs.op.pwd=pwd;
+				strcpy_s(gs.op.GradeName, sizeof(gs.op.GradeName), row[4]);
+			gs.op.pwd = pwd;
 			SaveName(name);	//缓存用户名
 		}
 		else
-			sta=FALSE;
+			sta = FALSE;
 		mysql_free_result(result);
 		CloseMySQL(&host);	//关闭MySQL连接	
 	};

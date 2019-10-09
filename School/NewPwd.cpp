@@ -13,7 +13,7 @@ extern global gs;
 
 IMPLEMENT_DYNAMIC(NewPwd, CDialogEx)
 
-	NewPwd::NewPwd(CWnd* pParent /*=NULL*/)
+NewPwd::NewPwd(CWnd* pParent /*=NULL*/)
 	: CDialogEx(NewPwd::IDD, pParent)
 {
 
@@ -68,19 +68,19 @@ void NewPwd::OnBnClickedCmdok()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	char bufPwd[72];
-	char bufNewPwd1[72],bufNewPwd2[72];
-	TxtOldPwd.GetWindowTextA(bufPwd,sizeof(bufPwd));
-	TxtNewPwd1.GetWindowTextA(bufNewPwd1,sizeof(bufNewPwd1));
-	TxtNewPwd2.GetWindowTextA(bufNewPwd2,sizeof(bufNewPwd2));
-	if(strcmp(bufNewPwd1,bufNewPwd2)!=0){
+	char bufNewPwd1[72], bufNewPwd2[72];
+	TxtOldPwd.GetWindowTextA(bufPwd, sizeof(bufPwd));
+	TxtNewPwd1.GetWindowTextA(bufNewPwd1, sizeof(bufNewPwd1));
+	TxtNewPwd2.GetWindowTextA(bufNewPwd2, sizeof(bufNewPwd2));
+	if (strcmp(bufNewPwd1, bufNewPwd2) != 0) {
 		MessageBoxA("两次输入新密码必须一致");
 		return;
 	}
-	if(strcmp(bufPwd,bufNewPwd1)==0){
+	if (strcmp(bufPwd, bufNewPwd1) == 0) {
 		MessageBoxA("不允许新旧密码一致");
 		return;
 	}
-	if(strlen(bufNewPwd1)<4){
+	if (strlen(bufNewPwd1) < 4) {
 		MessageBoxA("新密码至少四位");
 		return;
 	}
@@ -91,29 +91,29 @@ void NewPwd::OnBnClickedCmdok()
 	char cmd[200];
 	int  i;
 	long pwd;
-	sta=InitMySQL(&host);//连接MySQL数据库
-	if(sta==TRUE){
-		pwd=PwdCode(gs.op.Name,bufPwd);
-		sprintf_s(cmd,sizeof(cmd),"Select `ID` from `Operator` Where `User`='%s' And `Password`='%ld';",gs.op.Name,pwd);
-		mysql_query(&host.mysql,cmd);
+	sta = InitMySQL(&host);//连接MySQL数据库
+	if (sta == TRUE) {
+		pwd = PwdCode(gs.op.Name, bufPwd);
+		sprintf_s(cmd, sizeof(cmd), "Select `ID` from `Operator` Where `User`='%s' And `Password`='%ld';", gs.op.Name, pwd);
+		mysql_query(&host.mysql, cmd);
 		result = mysql_store_result(&host.mysql);
-		if(result!=NULL)
-			i=(long)result->row_count;//计数
+		if (result != NULL)
+			i = (long)result->row_count;//计数
 		else
-			i=0;
-		if(i!=1){//旧密码不符
+			i = 0;
+		if (i != 1) {//旧密码不符
 			MessageBoxA("旧密码不符");
 			CloseMySQL(&host);	//关闭MySQL连接	
-			return;		
+			return;
 		}
 		row = mysql_fetch_row(result);
-		ASSERT(gs.op.ID==atoi(row[0]));
+		ASSERT(gs.op.ID == atoi(row[0]));
 		mysql_free_result(result);
 		//校验通过，将用户数据读入全局变量gs.op中
-		pwd=PwdCode(gs.op.Name,bufNewPwd1);
-		sprintf_s(cmd,sizeof(cmd),"Update `operator` Set `password`='%ld' Where `ID`='%d';",pwd,gs.op.ID);
-		mysql_query(&host.mysql,cmd);
-		MessageBoxA("密码已更新，请记住新密码","提示");
+		pwd = PwdCode(gs.op.Name, bufNewPwd1);
+		sprintf_s(cmd, sizeof(cmd), "Update `operator` Set `password`='%ld' Where `ID`='%d';", pwd, gs.op.ID);
+		mysql_query(&host.mysql, cmd);
+		MessageBoxA("密码已更新，请记住新密码", "提示");
 		CloseMySQL(&host);	//关闭MySQL连接	
 	}
 	CDialogEx::OnOK();

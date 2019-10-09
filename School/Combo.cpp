@@ -60,7 +60,7 @@ void Combo::OnBnClickedCancel()
 void Combo::OnBnClickedCmdexit()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	ret->sta=FALSE;
+	ret->sta = FALSE;
 	CDialogEx::OnOK();
 }
 
@@ -68,13 +68,13 @@ void Combo::OnBnClickedCmdexit()
 void Combo::OnBnClickedCmdok()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	ret->sta=TRUE;
-	ComboBox.GetWindowTextA(ret->Sel,sizeof(ret->Sel));
+	ret->sta = TRUE;
+	ComboBox.GetWindowTextA(ret->Sel, sizeof(ret->Sel));
 	CDialogEx::OnOK();
 }
 
-int Combo::SetRet(ComobRet * lpret){
-	ret=lpret;
+int Combo::SetRet(ComobRet * lpret) {
+	ret = lpret;
 	return TRUE;
 }
 
@@ -88,27 +88,27 @@ BOOL Combo::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
-	if(ret->type==0){
+	if (ret->type == 0) {
 		MySQLHostVariable host;
 		MYSQL_RES *result;
 		MYSQL_ROW row;
 		int sta;	//状态标志
-		int i,j;
-		sta=InitMySQL(&host);//连接MySQL数据库
-		if(sta==TRUE){
-			mysql_query(&host.mysql,"Select `Course`,`CourseName`  From `Course` order by `Course`");
+		int i, j;
+		sta = InitMySQL(&host);//连接MySQL数据库
+		if (sta == TRUE) {
+			mysql_query(&host.mysql, "Select `Course`,`CourseName`  From `Course` order by `Course`");
 			result = mysql_store_result(&host.mysql);
-			if(result!=NULL)
-				j=(long)result->row_count;//总数
+			if (result != NULL)
+				j = (long)result->row_count;//总数
 			else
-				j=0;
-			for(i=0;i<j;i++){
-				row = mysql_fetch_row(result);	
-				ComboBox.InsertString(i,row[1]);
+				j = 0;
+			for (i = 0; i < j; i++) {
+				row = mysql_fetch_row(result);
+				ComboBox.InsertString(i, row[1]);
 			}
 			mysql_free_result(result);
 			CloseMySQL(&host);	//关闭MySQL连接	
-		};	
+		};
 		Combo::SetWindowTextA("请选择课程");
 	}
 	return TRUE;

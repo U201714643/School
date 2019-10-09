@@ -4,7 +4,7 @@
 #define  MYSQLPWD "19990220"
 #define  MYSQLDBS "school"
 
-typedef struct ComobRet{	//ComobBox选择窗口交互变量
+typedef struct ComobRet {	//ComobBox选择窗口交互变量
 	int type;
 	int sta;
 	char Sel[72];
@@ -17,7 +17,7 @@ typedef struct MySQLHostVariable
 }MySQLHostVariable;
 
 
-typedef struct operators{
+typedef struct operators {
 	int  ID;			//ID
 	int  grade;			//班级
 	char GradeName[32];	//班级名称
@@ -27,7 +27,7 @@ typedef struct operators{
 	int  right;			//权限
 }operators;
 
-typedef struct question{
+typedef struct question {
 	int ID;
 	int course;
 	char Text[72];
@@ -47,8 +47,8 @@ typedef struct global {
 }global;
 
 int ValidIP(char * str);		//校验IP地址合法性
-int PwdCode(char *s1, char *s2);	//两个字符串不可逆转换成long
+int PwdCode(char *s1, char *s2);	//用户名+密码编码
 int CloseMySQL(MySQLHostVariable * host);	//关闭MySQL连接
 int InitMySQL(MySQLHostVariable * host);	//初始化MySQL连接
-char * MsToTime(char * ms,char * Src);		//转换毫秒单位的时间为分：秒制
-int WriteListCtrl(CListCtrl *ListCtrl,char * Fn);//表格数据写文本文件
+char * MsToTime(char * ms, char * Src);		//转换毫秒单位的时间为分：秒制
+int WriteListCtrl(CListCtrl *ListCtrl, char * Fn);//表格数据写文本文件

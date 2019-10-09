@@ -40,7 +40,7 @@ BEGIN_MESSAGE_MAP(NewUser, CDialogEx)
 	ON_BN_CLICKED(IDCANCEL, &NewUser::OnBnClickedCancel)
 	ON_BN_CLICKED(IDC_CmdQuit, &NewUser::OnBnClickedCmdquit)
 	ON_BN_CLICKED(IDC_CmdOK, &NewUser::OnBnClickedCmdok)
-//	ON_CBN_SELCHANGE(IDC_CmbGrade, &NewUser::OnCbnSelchangeCmbgrade)
+	//	ON_CBN_SELCHANGE(IDC_CmbGrade, &NewUser::OnCbnSelchangeCmbgrade)
 END_MESSAGE_MAP()
 
 
@@ -81,23 +81,23 @@ BOOL NewUser::OnInitDialog()
 	MYSQL_RES *result;
 	MYSQL_ROW row;
 	int sta;	//状态标志
-	int  i,j;
-	for(;cCmbType.DeleteString(0)==1;);//删除初始内容
-	cCmbType.InsertString(0,"学生");
-	cCmbType.InsertString(1,"教师");
+	int  i, j;
+	for (; cCmbType.DeleteString(0) == 1;);//删除初始内容
+	cCmbType.InsertString(0, "学生");
+	cCmbType.InsertString(1, "教师");
 	cCmbType.SetCurSel(0);
-	sta=InitMySQL(&host);//连接MySQL数据库
-	if(sta==TRUE){
-		mysql_query(&host.mysql,"Select `Name` from `Grade` order by `ID`;");
+	sta = InitMySQL(&host);//连接MySQL数据库
+	if (sta == TRUE) {
+		mysql_query(&host.mysql, "Select `Name` from `Grade` order by `ID`;");
 		result = mysql_store_result(&host.mysql);
-		if(result!=NULL)
-			j=(long)result->row_count;//计数
+		if (result != NULL)
+			j = (long)result->row_count;//计数
 		else
-			j=0;
-		for(;cCmbGrade.DeleteString(0)==1;);//删除初始内容
-		for(i=0;i<j;i++){
+			j = 0;
+		for (; cCmbGrade.DeleteString(0) == 1;);//删除初始内容
+		for (i = 0; i < j; i++) {
 			row = mysql_fetch_row(result);
-			cCmbGrade.InsertString(i,row[0]);
+			cCmbGrade.InsertString(i, row[0]);
 		}
 		mysql_free_result(result);
 		CloseMySQL(&host);	//关闭MySQL连接	
@@ -117,37 +117,37 @@ void NewUser::OnBnClickedCmdok()
 	char Pwd2[72];
 	int  right;
 	int  opID;
-	cCmbType.GetWindowTextA(Type,sizeof(Type));
-	if(strcmp(Type,"学生")==0)
-		right=0;	//0--学生申请
+	cCmbType.GetWindowTextA(Type, sizeof(Type));
+	if (strcmp(Type, "学生") == 0)
+		right = 0;	//0--学生申请
 	else
-		right=2;	//2--教师申请
-	cCmbGrade.GetWindowTextA(Grade,sizeof(Grade));
-	if(strlen(Grade)<1){
+		right = 2;	//2--教师申请
+	cCmbGrade.GetWindowTextA(Grade, sizeof(Grade));
+	if (strlen(Grade) < 1) {
 		MessageBoxA("请选择班级");
 		return;
 	}
-	cTxtNo.GetWindowTextA(No,sizeof(No));
-	if(strlen(No)<4){
+	cTxtNo.GetWindowTextA(No, sizeof(No));
+	if (strlen(No) < 4) {
 		MessageBoxA("学号至少4位");
 		return;
 	}
-	if(strlen(No)>14){
+	if (strlen(No) > 14) {
 		MessageBoxA("学号至少14位");
 		return;
 	}
-	cTxtName.GetWindowTextA(Name,sizeof(Name));
-	if(strlen(Name)<4){
+	cTxtName.GetWindowTextA(Name, sizeof(Name));
+	if (strlen(Name) < 4) {
 		MessageBoxA("姓名至少2个汉字");
 		return;
 	}
-	cTxtPwd1.GetWindowTextA(Pwd1,sizeof(Pwd1));
-	if(strlen(Pwd1)<4){
+	cTxtPwd1.GetWindowTextA(Pwd1, sizeof(Pwd1));
+	if (strlen(Pwd1) < 4) {
 		MessageBoxA("密码长度至少4位");
 		return;
 	}
-	cTxtPwd2.GetWindowTextA(Pwd2,sizeof(Pwd2));
-	if(strcmp(Pwd1,Pwd2)!=0){
+	cTxtPwd2.GetWindowTextA(Pwd2, sizeof(Pwd2));
+	if (strcmp(Pwd1, Pwd2) != 0) {
 		MessageBoxA("两次输入的密码应一致");
 		return;
 	}
@@ -160,64 +160,64 @@ void NewUser::OnBnClickedCmdok()
 	int GradeID;
 	long pwd;
 	char cmd[256];
-	sta=InitMySQL(&host);//连接MySQL数据库
-	if(sta==TRUE){
-		sprintf_s(cmd,sizeof(cmd),"Select `ID` from `Grade` Where `Name`='%s'",Grade);
-		mysql_query(&host.mysql,cmd);
+	sta = InitMySQL(&host);//连接MySQL数据库
+	if (sta == TRUE) {
+		sprintf_s(cmd, sizeof(cmd), "Select `ID` from `Grade` Where `Name`='%s'", Grade);
+		mysql_query(&host.mysql, cmd);
 		result = mysql_store_result(&host.mysql);
-		if(result==NULL){
+		if (result == NULL) {
 			CloseMySQL(&host);	//关闭MySQL连接	
 			MessageBoxA("所选班级无效,注册失败");
 			return;
 		}
-		j=(long)result->row_count;//计数
-		if(j!=1){
+		j = (long)result->row_count;//计数
+		if (j != 1) {
 			mysql_free_result(result);
 			CloseMySQL(&host);	//关闭MySQL连接	
 			MessageBoxA("选择班级无效,注册失败");
-			return;		
+			return;
 		}
 		row = mysql_fetch_row(result);
-		GradeID=atoi(row[0]);
+		GradeID = atoi(row[0]);
 		mysql_free_result(result);
 
-		sprintf_s(cmd,sizeof(cmd),"Select `ID` from `Operator` Where `No`='%s'",No);
-		mysql_query(&host.mysql,cmd);
+		sprintf_s(cmd, sizeof(cmd), "Select `ID` from `Operator` Where `No`='%s'", No);
+		mysql_query(&host.mysql, cmd);
 		result = mysql_store_result(&host.mysql);
-		if(result==NULL){
+		if (result == NULL) {
 			CloseMySQL(&host);	//关闭MySQL连接	
 			MessageBoxA("学号无效,注册失败");
 			return;
 		}
-		j=(long)result->row_count;//计数
-		if(j>0){
+		j = (long)result->row_count;//计数
+		if (j > 0) {
 			mysql_free_result(result);
 			CloseMySQL(&host);	//关闭MySQL连接	
 			MessageBoxA("学号已存在,注册失败");
-			return;		
+			return;
 		}
 		mysql_free_result(result);
 
-		pwd=PwdCode(Name,Pwd1);
-		if (right==0){	//申请学生用户
-			sprintf_s(cmd,sizeof(cmd),"Insert Into `Operator` (`Grade`,`No`,`User`,`Password`,`right`)"
-			" Values ('%d','%s','%s','%ld','0');",GradeID,No,Name,pwd);
-			mysql_query(&host.mysql,cmd);
-			j=(int)host.mysql.affected_rows;
+		pwd = PwdCode(Name, Pwd1);
+		if (right == 0) {	//申请学生用户
+			sprintf_s(cmd, sizeof(cmd), "Insert Into `Operator` (`Grade`,`No`,`User`,`Password`,`right`)"
+				" Values ('%d','%s','%s','%ld','0');", GradeID, No, Name, pwd);
+			mysql_query(&host.mysql, cmd);
+			j = (int)host.mysql.affected_rows;
 		}
-		else{	//申请教师用户
-			sprintf_s(cmd,sizeof(cmd),"Insert Into `Operator` (`Grade`,`No`,`User`,`Password`,`right`)"
-			" Values ('%d','%s','%s','%ld','2');",0,No,Name,pwd);
-			mysql_query(&host.mysql,cmd);//插入人员表
-			j=(int)host.mysql.affected_rows;
-			if(j==1){
-				opID=(int)host.mysql.insert_id;
-				sprintf_s(cmd,sizeof(cmd),"Insert Into `Manage` (`OperatorID`,`GradeID`,`Right`)"
-				" Values ('%d','%d','0');",opID,GradeID);
-				mysql_query(&host.mysql,cmd);//插入管班表
+		else {	//申请教师用户
+			sprintf_s(cmd, sizeof(cmd), "Insert Into `Operator` (`Grade`,`No`,`User`,`Password`,`right`)"
+				" Values ('%d','%s','%s','%ld','2');", 0, No, Name, pwd);
+			mysql_query(&host.mysql, cmd);//插入人员表
+			j = (int)host.mysql.affected_rows;
+			if (j == 1) {
+				opID = (int)host.mysql.insert_id;
+				sprintf_s(cmd, sizeof(cmd), "Insert Into `Manage` (`OperatorID`,`GradeID`,`Right`)"
+					" Values ('%d','%d','0');", opID, GradeID);
+				mysql_query(&host.mysql, cmd);//插入管班表
 			}
 		}
-		if(j==1)
+		if (j == 1)
 			MessageBoxA("注册成功");
 		else
 			MessageBoxA("注册失败");

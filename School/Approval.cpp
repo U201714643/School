@@ -69,39 +69,39 @@ BOOL Approval::OnInitDialog()
 	return TRUE;
 }
 
-int  Approval::Init(void){
+int  Approval::Init(void) {
 	MySQLHostVariable host;
 	MYSQL_RES *result;
 	MYSQL_ROW row;
 	int sta;	//状态标志
 	int  i;
 	char buf[256];
-	sta=InitMySQL(&host);//连接MySQL数据库
-	if(sta==TRUE){
-		mysql_query(&host.mysql,"SELECT operator.ID,`Name`,`No`,`user`,`right` "
-		" FROM operator Left JOIN grade ON operator.grade = grade.ID Where (`right`='0' Or `right`='2')Limit 1;");
+	sta = InitMySQL(&host);//连接MySQL数据库
+	if (sta == TRUE) {
+		mysql_query(&host.mysql, "SELECT operator.ID,`Name`,`No`,`user`,`right` "
+			" FROM operator Left JOIN grade ON operator.grade = grade.ID Where (`right`='0' Or `right`='2')Limit 1;");
 		result = mysql_store_result(&host.mysql);
-		if(result==NULL){
+		if (result == NULL) {
 			CloseMySQL(&host);	//关闭MySQL连接	
 			return FALSE;
 		}
-		i=(long)result->row_count;//计数
-		if(i>0){
+		i = (long)result->row_count;//计数
+		if (i > 0) {
 			row = mysql_fetch_row(result);
-			ID=atoi(row[0]);
-			right=atoi(row[4]);
-			if(right==0)
-				sprintf_s(buf,sizeof(buf),
-				"待审批申请：\r\n人员类别：学生\r\n班级：%s\r\n学号：%s\r\n姓名：%s\r\n",row[1],row[2],row[3]);
+			ID = atoi(row[0]);
+			right = atoi(row[4]);
+			if (right == 0)
+				sprintf_s(buf, sizeof(buf),
+					"待审批申请：\r\n人员类别：学生\r\n班级：%s\r\n学号：%s\r\n姓名：%s\r\n", row[1], row[2], row[3]);
 			else
-				sprintf_s(buf,sizeof(buf),
-				"待审批申请：\r\n人员类别：教师\r\n员工号：%s\r\n姓名：%s\r\n",row[2],row[3]);
+				sprintf_s(buf, sizeof(buf),
+					"待审批申请：\r\n人员类别：教师\r\n员工号：%s\r\n姓名：%s\r\n", row[2], row[3]);
 			cEditNote.SetWindowTextA(buf);
 			cEditNote.SetSel(-1);
 		}
 		mysql_free_result(result);
 		CloseMySQL(&host);	//关闭MySQL连接	
-		if(i<=0){
+		if (i <= 0) {
 			MessageBoxA("无待审批任务");
 			CDialogEx::OnOK();
 		}
@@ -122,18 +122,18 @@ void Approval::OnBnClickedCmdenable()
 	MySQLHostVariable host;
 	int sta;	//状态标志
 	char cmd[256];
-	sta=InitMySQL(&host);//连接MySQL数据库
-	if(sta==TRUE){
-		if(right==2){
-			sprintf_s(cmd,sizeof(cmd),"Update `operator` SET `Right`='3',`grade`='0' Where `ID`='%d';",ID);
+	sta = InitMySQL(&host);//连接MySQL数据库
+	if (sta == TRUE) {
+		if (right == 2) {
+			sprintf_s(cmd, sizeof(cmd), "Update `operator` SET `Right`='3',`grade`='0' Where `ID`='%d';", ID);
 		}
 		else
-			sprintf_s(cmd,sizeof(cmd),"Update `operator` SET `Right`='1' Where `ID`='%d';",ID);
-		mysql_query(&host.mysql,cmd);
+			sprintf_s(cmd, sizeof(cmd), "Update `operator` SET `Right`='1' Where `ID`='%d';", ID);
+		mysql_query(&host.mysql, cmd);
 		CloseMySQL(&host);	//关闭MySQL连接	
 		Init();
 	}
-	return ;
+	return;
 }
 
 
@@ -143,13 +143,13 @@ void Approval::OnBnClickedCmddisable()
 	MySQLHostVariable host;
 	int sta;	//状态标志
 	char cmd[256];
-	sta=InitMySQL(&host);//连接MySQL数据库
-	if(sta==TRUE){
-		sprintf_s(cmd,sizeof(cmd),"Delete From `operator` Where `ID`='%d';",ID);
-		mysql_query(&host.mysql,cmd);
+	sta = InitMySQL(&host);//连接MySQL数据库
+	if (sta == TRUE) {
+		sprintf_s(cmd, sizeof(cmd), "Delete From `operator` Where `ID`='%d';", ID);
+		mysql_query(&host.mysql, cmd);
 		CloseMySQL(&host);	//关闭MySQL连接	
 		Init();
 	}
-	return ;
+	return;
 }
 

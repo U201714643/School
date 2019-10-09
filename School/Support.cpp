@@ -47,7 +47,7 @@ int InitMySQL(MySQLHostVariable * host)	//初始化MySQL连接
 	return TRUE;
 }
 
-int PwdCode(char *s1, char *s2) {	//两个字符串不可逆转换成long
+int PwdCode(char *s1, char *s2) {	//用户名+密码编码
 	int i, j;
 	long l;
 	for (l = 0, j = 0; s1[j] != 0; j++) {
