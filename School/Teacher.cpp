@@ -281,9 +281,10 @@ int Teacher::ChMode(int Mode) {
 		for (i = 0; i < j; i++) {
 			row = mysql_fetch_row(result);
 			ListCtrl.InsertItem(i, row[0]);
-			sprintf_s(buf, sizeof(buf), "%d", i + 1);
+			sprintf_s(buf, sizeof(buf), "%d", i + 1);	//row中内容不能修改
 			ListCtrl.SetItemText(i, 1, buf);
-			ListCtrl.SetItemText(i, 2, row[1]);
+			sprintf_s(buf, sizeof(buf), "%s", row[1]);	//row中内容不能修改
+			ListCtrl.SetItemText(i, 2, RealChar(buf));
 			ListCtrl.SetItemText(i, 3, row[2]);
 			ListCtrl.SetItemText(i, 4, row[3]);
 			ListCtrl.SetItemText(i, 5, row[4]);

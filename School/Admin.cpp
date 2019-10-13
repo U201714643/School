@@ -29,7 +29,7 @@ typedef struct adminlocal {	//admin窗体共用变量
 
 
 extern global gs;
-adminlocal ls;
+adminlocal AWinInf;
 
 
 // admin 对话框
@@ -127,24 +127,24 @@ BOOL Admin::OnInitDialog()
 	int i, j;
 	sta = InitMySQL(&host);//连接MySQL数据库
 
-	ls.hTreeItemSchool = cTree.InsertItem("学校", TVI_ROOT);//在根结点上添加父节点“学校”
+	AWinInf.hTreeItemSchool = cTree.InsertItem("学校", TVI_ROOT);//在根结点上添加父节点“学校”
 	if (sta == TRUE) {
-		ls.hTreeItemGroup = cTree.InsertItem("教研组", ls.hTreeItemSchool, NULL);//在“学校”结点小添加“教研组”
+		AWinInf.hTreeItemGroup = cTree.InsertItem("教研组", AWinInf.hTreeItemSchool, NULL);//在“学校”结点小添加“教研组”
 		mysql_query(&host.mysql, "Select `ID`,`Name`  From `Grade` order by `ID`");
 		result = mysql_store_result(&host.mysql);
 		if (result != NULL)
 			j = (long)result->row_count;//总数
 		else
 			j = 0;
-		for (hSubItem1 = ls.hTreeItemGroup, i = 0; i < j; i++) {
+		for (hSubItem1 = AWinInf.hTreeItemGroup, i = 0; i < j; i++) {
 			row = mysql_fetch_row(result);
-			hSubItem1 = cTree.InsertItem(row[1], ls.hTreeItemSchool, hSubItem1);
+			hSubItem1 = cTree.InsertItem(row[1], AWinInf.hTreeItemSchool, hSubItem1);
 		}
 		mysql_free_result(result);
 
 	};
 
-	ls.hTreeItemCourse = cTree.InsertItem("课程", TVI_ROOT);//在根结点上添加父节点“课程”
+	AWinInf.hTreeItemCourse = cTree.InsertItem("课程", TVI_ROOT);//在根结点上添加父节点“课程”
 	if (sta == TRUE) {
 		mysql_query(&host.mysql, "Select `Course`,`CourseName`  From `Course` order by `Course`");
 		result = mysql_store_result(&host.mysql);
@@ -154,12 +154,12 @@ BOOL Admin::OnInitDialog()
 			j = 0;
 		for (hSubItem1 = NULL, i = 0; i < j; i++) {
 			row = mysql_fetch_row(result);
-			hSubItem1 = cTree.InsertItem(row[1], ls.hTreeItemCourse, hSubItem1);
+			hSubItem1 = cTree.InsertItem(row[1], AWinInf.hTreeItemCourse, hSubItem1);
 		}
 		mysql_free_result(result);
 		CloseMySQL(&host);	//关闭MySQL连接	
 	};
-	ls.hTreeItemManage = cTree.InsertItem("教学任务分配", TVI_ROOT);//在根结点上添加“教学任务分配”
+	AWinInf.hTreeItemManage = cTree.InsertItem("教学任务分配", TVI_ROOT);//在根结点上添加“教学任务分配”
 	ChMode(WMNone);
 	return TRUE;
 }
@@ -246,19 +246,19 @@ void Admin::OnTvnSelchangedTree(NMHDR *pNMHDR, LRESULT *pResult)
 	HTREEITEM hItem, ItemP;
 	CString ItemText;
 	hItem = cTree.GetSelectedItem();
-	if (hItem == ls.hTreeItemManage) {
+	if (hItem == AWinInf.hTreeItemManage) {
 		TeacherManage();	//用户点击选择教师分工
 	}
 	else {
 		ItemP = cTree.GetParentItem(hItem);
-		if (ItemP == ls.hTreeItemCourse) {		//用户点击选择某课程
+		if (ItemP == AWinInf.hTreeItemCourse) {		//用户点击选择某课程
 			ItemText = cTree.GetItemText(hItem);
-			strcpy_s(ls.ItemText, sizeof(ls.ItemText), ItemText);
+			strcpy_s(AWinInf.ItemText, sizeof(AWinInf.ItemText), ItemText);
 			ChMode(WMQust);
 		}
-		else if (ItemP == ls.hTreeItemSchool) {//用户点击选择某班级
+		else if (ItemP == AWinInf.hTreeItemSchool) {//用户点击选择某班级
 			ItemText = cTree.GetItemText(hItem);
-			strcpy_s(ls.ItemText, sizeof(ls.ItemText), ItemText);
+			strcpy_s(AWinInf.ItemText, sizeof(AWinInf.ItemText), ItemText);
 			ChMode(WMOper);
 		}
 	}
@@ -280,13 +280,13 @@ int Admin::ChMode(int mode) {//改变工作模式
 	MYSQL_ROW row;
 	int sta;	//状态标志
 	int i, j, n;
-	char buf[72];
+	char buf[EXPLEN];
 	char cmd[512];
-	ls.WorkMode = mode;
+	AWinInf.WorkMode = mode;
 	ListCtrl.DeleteAllItems();
 	for (; ListCtrl.DeleteColumn(0) == TRUE;);
 
-	if (ls.WorkMode == WMNone) {
+	if (AWinInf.WorkMode == WMNone) {
 		TxtNote.SetWindowTextA("请选择");
 		CmdClrPwd.ShowWindow(SW_HIDE);
 		CmdApprovalTask.ShowWindow(SW_HIDE);
@@ -294,19 +294,19 @@ int Admin::ChMode(int mode) {//改变工作模式
 		CmdSave.EnableWindow(FALSE);
 		cTree.EnableWindow(TRUE);
 	}
-	else if (ls.WorkMode == WMOper) {
-		sprintf_s(buf, sizeof(buf), "%s 人员管理", ls.ItemText);
+	else if (AWinInf.WorkMode == WMOper) {
+		sprintf_s(buf, sizeof(buf), "%s 人员管理", AWinInf.ItemText);
 		TxtNote.SetWindowTextA(buf);
 		CmdClrPwd.ShowWindow(SW_SHOW);
 		CmdApprovalTask.ShowWindow(SW_HIDE);
 		CmdBatch.EnableWindow(TRUE);
 		CmdSave.EnableWindow(TRUE);
 		CmdDel.SetWindowTextA("删除人员");
-		ls.GradeID = 0;
+		AWinInf.GradeID = 0;
 		//----------连接MySQL数据库----------
 		sta = InitMySQL(&host);
 		if (sta == TRUE) {
-			sprintf_s(cmd, sizeof(cmd), "Select `ID`,`Name`  From `Grade` Where `Name`='%s';", ls.ItemText);
+			sprintf_s(cmd, sizeof(cmd), "Select `ID`,`Name`  From `Grade` Where `Name`='%s';", AWinInf.ItemText);
 			mysql_query(&host.mysql, cmd);
 			result = mysql_store_result(&host.mysql);
 			if (result != NULL)
@@ -315,7 +315,7 @@ int Admin::ChMode(int mode) {//改变工作模式
 				j = 0;
 			if (j == 1) {
 				row = mysql_fetch_row(result);
-				ls.GradeID = atoi(row[0]);
+				AWinInf.GradeID = atoi(row[0]);
 			}
 			mysql_free_result(result);
 		};
@@ -331,7 +331,7 @@ int Admin::ChMode(int mode) {//改变工作模式
 		ListCtrl.SetColumnWidth(3, 80);
 		//----------获得表格内容----------
 		sprintf_s(cmd, sizeof(cmd), "Select `ID`,`No`,`user`,`right`  From `operator` "
-			" Where `Grade`='%d' order by `right` DESC,`No` ASC;", ls.GradeID);
+			" Where `Grade`='%d' order by `right` DESC,`No` ASC;", AWinInf.GradeID);
 		mysql_query(&host.mysql, cmd);
 		result = mysql_store_result(&host.mysql);
 		if (result != NULL)
@@ -366,18 +366,18 @@ int Admin::ChMode(int mode) {//改变工作模式
 		mysql_free_result(result);
 		CloseMySQL(&host);	//关闭MySQL连接	
 	}
-	else if (ls.WorkMode == WMQust) {
-		sprintf_s(buf, sizeof(buf), "%s课程 题库管理", ls.ItemText);
+	else if (AWinInf.WorkMode == WMQust) {
+		sprintf_s(buf, sizeof(buf), "%s课程 题库管理", AWinInf.ItemText);
 		TxtNote.SetWindowTextA(buf);
 		CmdClrPwd.ShowWindow(SW_HIDE);
 		CmdApprovalTask.ShowWindow(SW_HIDE);
 		CmdBatch.EnableWindow(TRUE);
 		CmdSave.EnableWindow(TRUE);
 		CmdDel.SetWindowTextA("删除题目");
-		ls.Course = 0;
+		AWinInf.Course = 0;
 		sta = InitMySQL(&host);//连接MySQL数据库
 		if (sta != TRUE)	return FALSE;
-		sprintf_s(cmd, sizeof(cmd), "Select `Course`,`CourseName`  From `Course` Where `CourseName`='%s';", ls.ItemText);
+		sprintf_s(cmd, sizeof(cmd), "Select `Course`,`CourseName`  From `Course` Where `CourseName`='%s';", AWinInf.ItemText);
 		mysql_query(&host.mysql, cmd);
 		result = mysql_store_result(&host.mysql);
 		if (result != NULL)
@@ -386,10 +386,10 @@ int Admin::ChMode(int mode) {//改变工作模式
 			j = 0;
 		if (j == 1) {
 			row = mysql_fetch_row(result);
-			ls.Course = atoi(row[0]);
+			AWinInf.Course = atoi(row[0]);
 		}
 		mysql_free_result(result);
-		if (ls.Course == 0) {
+		if (AWinInf.Course == 0) {
 			CloseMySQL(&host);	//关闭MySQL连接
 			return FALSE;
 		}
@@ -404,7 +404,7 @@ int Admin::ChMode(int mode) {//改变工作模式
 		ListCtrl.SetColumnWidth(2, 80);
 		ListCtrl.SetColumnWidth(3, 80);
 		sprintf_s(cmd, sizeof(cmd), "Select `ID`,`Text`,`Answer`  From `questions` "
-			" Where `course`='%d' order by `ID` ;", ls.Course);
+			" Where `course`='%d' order by `ID` ;", AWinInf.Course);
 		mysql_query(&host.mysql, cmd);
 		result = mysql_store_result(&host.mysql);
 		if (result != NULL)
@@ -414,23 +414,24 @@ int Admin::ChMode(int mode) {//改变工作模式
 		for (i = 0; i < j; i++) {
 			row = mysql_fetch_row(result);
 			ListCtrl.InsertItem(i, row[0]);
-			sprintf_s(buf, sizeof(buf), "%d", i + 1);
+			sprintf_s(buf, sizeof(buf), "%d", i + 1);	//row中内容不能修改
 			ListCtrl.SetItemText(i, 1, buf);
-			ListCtrl.SetItemText(i, 2, row[1]);
+			sprintf_s(buf, sizeof(buf), "%s", row[1]);	//row中内容不能修改
+			ListCtrl.SetItemText(i, 2, RealChar(buf));
 			ListCtrl.SetItemText(i, 3, row[2]);
 		}
 		mysql_free_result(result);
 		CloseMySQL(&host);	//关闭MySQL连接
 	}
-	else if (ls.WorkMode == WMManage) {
-		sprintf_s(buf, sizeof(buf), "教学任务分配", ls.ItemText);
+	else if (AWinInf.WorkMode == WMManage) {
+		sprintf_s(buf, sizeof(buf), "教学任务分配", AWinInf.ItemText);
 		TxtNote.SetWindowTextA(buf);
 		CmdClrPwd.ShowWindow(SW_HIDE);
 		CmdApprovalTask.ShowWindow(SW_SHOW);
 		CmdBatch.EnableWindow(FALSE);
 		CmdSave.EnableWindow(TRUE);
 		CmdDel.SetWindowTextA("取消任务");
-		ls.Course = 0;
+		AWinInf.Course = 0;
 		sta = InitMySQL(&host);//连接MySQL数据库
 		if (sta != TRUE)	return FALSE;
 		//绘制表格标题
@@ -506,7 +507,7 @@ int BatchAddQuestions(void) {
 		if ((eq > 0) && (eq < 70) && (i - eq > 1) && (i - eq < 30)) {
 			pwd = PwdCode(buf + eq + 1, buf);
 			sprintf_s(cmd, sizeof(cmd), "Insert Into `Questions` (`Course`,`Text`,`Answer`) "
-				" Values('%d','%s','%s');", ls.Course, buf, buf + eq + 1, pwd);
+				" Values('%d','%s','%s');", AWinInf.Course, buf, buf + eq + 1, pwd);
 			mysql_query(&host.mysql, cmd);
 		}
 	}
@@ -548,7 +549,7 @@ int BatchAddUser(void) {
 		if ((eq > 0) && (eq < 70) && (i - eq > 1) && (i - eq < 30)) {
 			pwd = PwdCode(buf + eq + 1, buf);
 			sprintf_s(cmd, sizeof(cmd), "Insert Into `operator` (`Grade`,`No`,`User`,`Password`,`right`) "
-				" Values('%d','%s','%s','%ld','1');", ls.GradeID, buf, buf + eq + 1, pwd);
+				" Values('%d','%s','%s','%ld','1');", AWinInf.GradeID, buf, buf + eq + 1, pwd);
 			mysql_query(&host.mysql, cmd);
 		}
 	}
@@ -561,13 +562,13 @@ void Admin::OnBnClickedCmdbatch()
 {
 	// TODO: 在此添加控件通知处理程序代码
 
-	if (ls.WorkMode == WMOper)
+	if (AWinInf.WorkMode == WMOper)
 		BatchAddUser();
-	else if (ls.WorkMode == WMQust)
+	else if (AWinInf.WorkMode == WMQust)
 		BatchAddQuestions();
 	else
 		MessageBoxA("无效命令");
-	ChMode(ls.WorkMode);
+	ChMode(AWinInf.WorkMode);
 }
 
 
@@ -631,11 +632,11 @@ void Admin::OnBnClickedCmddel()
 	}
 	//#define WMOper 1	//工作模式-学员管理
 	//#define WMQust 2	//工作模式-题库管理
-	if (ls.WorkMode == WMOper)
+	if (AWinInf.WorkMode == WMOper)
 		sprintf_s(cmd, sizeof(cmd), "确认要删除%d人信息吗？", i);
-	else if (ls.WorkMode == WMQust)
+	else if (AWinInf.WorkMode == WMQust)
 		sprintf_s(cmd, sizeof(cmd), "确认要删除%d道题目吗？", i);
-	else if (ls.WorkMode == WMManage)
+	else if (AWinInf.WorkMode == WMManage)
 		sprintf_s(cmd, sizeof(cmd), "确认要取消%d项分班授权？", i);
 	else
 		return;
@@ -648,7 +649,7 @@ void Admin::OnBnClickedCmddel()
 	sta = InitMySQL(&host);//连接MySQL数据库
 	if (sta == TRUE) {
 		pos = ListCtrl.GetFirstSelectedItemPosition();
-		if (ls.WorkMode == WMOper) {
+		if (AWinInf.WorkMode == WMOper) {
 			for (; (i = ListCtrl.GetNextSelectedItem(pos)) >= 0;) {
 				ListCtrl.GetItemText(i, 0, ID, sizeof(ID));
 				sprintf_s(cmd, sizeof(cmd), "Delete From `operator` Where `ID`='%s';", ID);
@@ -657,7 +658,7 @@ void Admin::OnBnClickedCmddel()
 			}
 			MessageBoxA("已删除", "提示");
 		}
-		else if (ls.WorkMode == WMQust) {
+		else if (AWinInf.WorkMode == WMQust) {
 			for (; (i = ListCtrl.GetNextSelectedItem(pos)) >= 0;) {
 				ListCtrl.GetItemText(i, 0, ID, sizeof(ID));
 				sprintf_s(cmd, sizeof(cmd), "Delete From `questions` Where `ID`='%s';", ID);
@@ -665,7 +666,7 @@ void Admin::OnBnClickedCmddel()
 			}
 			MessageBoxA("已删除", "提示");
 		}
-		else if (ls.WorkMode == WMManage) {
+		else if (AWinInf.WorkMode == WMManage) {
 			for (; (i = ListCtrl.GetNextSelectedItem(pos)) >= 0;) {
 				ListCtrl.GetItemText(i, 0, ID, sizeof(ID));
 				sprintf_s(cmd, sizeof(cmd), "Delete From `Manage` Where `ID`='%s';", ID);
@@ -677,7 +678,7 @@ void Admin::OnBnClickedCmddel()
 			MessageBoxA("无效命令未执行", "提示");
 		CloseMySQL(&host);	//关闭MySQL连接	
 	}
-	ChMode(ls.WorkMode);
+	ChMode(AWinInf.WorkMode);
 }
 
 
@@ -797,11 +798,11 @@ void Admin::OnBnClickedCmdsave()
 	// TODO: 在此添加控件通知处理程序代码
 	CString Fn;
 	CString Fndef;
-	if (ls.WorkMode == WMOper)
+	if (AWinInf.WorkMode == WMOper)
 		Fndef = "学生名单.xls";
-	else if (ls.WorkMode == WMQust)
+	else if (AWinInf.WorkMode == WMQust)
 		Fndef = "题库.xls";
-	else if (ls.WorkMode == WMManage)
+	else if (AWinInf.WorkMode == WMManage)
 		Fndef = "教学分工.xls";
 	else {
 		MessageBoxA("无效命令");

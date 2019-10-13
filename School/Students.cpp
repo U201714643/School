@@ -27,7 +27,7 @@
 #define  RankScore	5	 //排序方式-正确率
 
 
-typedef struct studentslocal {	//admin窗体共用变量
+typedef struct studentslocal {	//student窗体共用变量
 	int   WorkMode;	//ModNone-无,ModStats-统计,ModExamA-测验前,ModExamB-测验中,ModExamC-测验后,ModReview-回顾
 	DWORD ExamStart;//测验开始时间(ms)
 	int   RemainingSec;//测验剩余时间(S)
@@ -42,12 +42,11 @@ typedef struct studentslocal {	//admin窗体共用变量
 	question ques[30];	//当前测试题
 }studentslocal;
 
-
 static int ReadOrSkip(int now, int max, int need, int needmax, int mode);//决定是否读取当前记录
 static int RndExchQues(int size, int tim);//随机交换试题次序
 
 extern global gs;
-studentslocal lss;
+studentslocal WinInf;
 
 
 // Students 对话框
@@ -138,12 +137,12 @@ BOOL Students::OnInitDialog()
 BOOL Students::Init() {	//初始化
 	char buf[72];
 	srand((unsigned int)GetTickCount());
-	lss.OpertorID = gs.op.ID;
+	WinInf.OpertorID = gs.op.ID;
 	sprintf_s(buf, sizeof(buf), "欢迎 %s-%s 同学", gs.op.GradeName, gs.op.Name);
 	SetWindowTextA(buf);
 	CmbCourse.SetWindowTextA("");
 	CmbCourse.EnableWindow(TRUE);
-	lss.WorkMode = ModNone;
+	WinInf.WorkMode = ModNone;
 	CreateCtrl();//设定控件位置
 	ShowMode();
 	return TRUE;
@@ -158,7 +157,7 @@ int Students::InitCmbCourse(void) {	//初始化课程下拉框
 	int Mode;	//初始化模式
 	char cmd[512];
 	static int LastMode = -9999; //记住上次初始化模式
-	if (lss.ExamMode == ExamRetry)
+	if (WinInf.ExamMode == ExamRetry)
 		Mode = 1;	//错题练习
 	else
 		Mode = 2;//全部课程
@@ -249,54 +248,54 @@ void Students::OnBnClickedCmdsubmit()
 	int mm, ss;
 	char buf[72];
 	KillTimer(1);
-	lss.WorkMode = ModExamC;
+	WinInf.WorkMode = ModExamC;
 	ShowMode();
 	for (i = 0, c = 0, e = 0; i < 30; i++) {
-		if (lss.ques[i].ID == 0) {
+		if (WinInf.ques[i].ID == 0) {
 			Flag[i].ShowWindow(SW_HIDE);
 			Prompt[i].ShowWindow(SW_HIDE);
 			Answer[i].EnableWindow(FALSE);
 			continue;
 		}
 		Answer[i].GetWindowTextA(buf, sizeof(buf));
-		if ((buf[0] == 0) && ((lss.ExamMode == ExamTry) || (lss.ExamMode == ExamRetry))) {	//刷题或错题模式下的未答题目
+		if ((buf[0] == 0) && ((WinInf.ExamMode == ExamTry) || (WinInf.ExamMode == ExamRetry))) {	//刷题或错题模式下的未答题目
 			Flag[i].SetWindowTextA("未答");
 			Prompt[i].ShowWindow(SW_SHOW);
-			lss.ques[i].Correct = 0;
-			lss.ques[i].Error = 0;
+			WinInf.ques[i].Correct = 0;
+			WinInf.ques[i].Error = 0;
 
 		}
 		else {
-			lss.ques[i].UserAnswer = atoi(buf);
-			if (lss.ques[i].UserAnswer == lss.ques[i].Answer) {
+			WinInf.ques[i].UserAnswer = atoi(buf);
+			if (WinInf.ques[i].UserAnswer == WinInf.ques[i].Answer) {
 				Flag[i].SetWindowTextA("正确");
 				Prompt[i].ShowWindow(SW_HIDE);
-				lss.ques[i].Correct = 1;
-				lss.ques[i].Error = 0;
+				WinInf.ques[i].Correct = 1;
+				WinInf.ques[i].Error = 0;
 				c++;
 			}
 			else {
 				Flag[i].SetWindowTextA("错误");
 				Prompt[i].ShowWindow(SW_SHOW);
-				lss.ques[i].Correct = 0;
-				lss.ques[i].Error = 1;
+				WinInf.ques[i].Correct = 0;
+				WinInf.ques[i].Error = 1;
 				e++;
 			}
 		}
 		Flag[i].ShowWindow(SW_SHOW);
 		Answer[i].EnableWindow(FALSE);
 	}
-	lss.Error = e;
-	lss.Correct = c;
-	lss.ExamMs = (int)(GetTickCount() - lss.ExamStart);
+	WinInf.Error = e;
+	WinInf.Correct = c;
+	WinInf.ExamMs = (int)(GetTickCount() - WinInf.ExamStart);
 	if ((c + e) > 0)
-		lss.Score = 100.0*c / (c + e);
+		WinInf.Score = 100.0*c / (c + e);
 	else
-		lss.Score = 0;
-	ss = lss.ExamMs / 1000;
+		WinInf.Score = 0;
+	ss = WinInf.ExamMs / 1000;
 	mm = ss / 60;
 	ss = ss % 60;
-	sprintf_s(buf, sizeof(buf), "测试用时%d分%d秒。正确%d道，错误%d道，得分%5.2f", mm, ss, c, e, lss.Score);
+	sprintf_s(buf, sizeof(buf), "测试用时%d分%d秒。正确%d道，错误%d道，得分%5.2f", mm, ss, c, e, WinInf.Score);
 	MessageBoxA(buf, "测试结果");
 }
 
@@ -310,14 +309,14 @@ int  Students::WriteExam() {	//测试结果写MySQL数据库
 	if (sta == TRUE) {
 		sprintf_s(cmd, sizeof(cmd), "Insert Into `Exam` (`TimesTamp`,`ExamType`,`Examms`,`CourseID`,`OperatorID`,`Correct`,`Error`,`Score`)"
 			" Values (now(),'%d','%d','%d','%d','%d','%d','%lf');",
-			lss.ExamMode, lss.ExamMs, lss.CourseID, lss.OpertorID, lss.Correct, lss.Error, lss.Score);
+			WinInf.ExamMode, WinInf.ExamMs, WinInf.CourseID, WinInf.OpertorID, WinInf.Correct, WinInf.Error, WinInf.Score);
 		mysql_query(&host.mysql, cmd);	//记录测验概况
-		lss.ExamID = (long)host.mysql.insert_id;
+		WinInf.ExamID = (long)host.mysql.insert_id;
 		for (i = 0; i < 30; i++) {
-			if (lss.ques[i].Error + lss.ques[i].Correct > 0) {
+			if (WinInf.ques[i].Error + WinInf.ques[i].Correct > 0) {
 				sprintf_s(cmd, sizeof(cmd), "Insert Into `ExamDetails`(`ExamID`,`QuestID`,`UserAnswer`,`Correct`,`Error`)"
 					"Values ('%d','%d','%d','%d','%d');",
-					lss.ExamID, lss.ques[i].ID, lss.ques[i].UserAnswer, lss.ques[i].Correct, lss.ques[i].Error);
+					WinInf.ExamID, WinInf.ques[i].ID, WinInf.ques[i].UserAnswer, WinInf.ques[i].Correct, WinInf.ques[i].Error);
 				mysql_query(&host.mysql, cmd);	//记录测验详情
 			}
 		}
@@ -330,7 +329,7 @@ void Students::OnBnClickedCmdquit()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	WriteExam();	//测试结果写MySQL数据库
-	lss.WorkMode = ModExamA;
+	WinInf.WorkMode = ModExamA;
 	ShowMode();
 }
 
@@ -339,7 +338,7 @@ void Students::OnBnClickedCmdtry()
 	// TODO: 在此添加控件通知处理程序代码
 	int i;
 	SetTimer(1, 1000, NULL);
-	lss.WorkMode = ModExamB;
+	WinInf.WorkMode = ModExamB;
 	ShowMode();
 	for (i = 0; i < 30; i++) {
 		Answer[i].EnableWindow(TRUE);
@@ -352,7 +351,7 @@ LRESULT Students::DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam) {
 		WORD wID = LOWORD(wParam) - 15300;
 		if ((wID >= 0) && (wID <= 29)) {
 			char buf[72];
-			sprintf_s(buf, sizeof(buf), "%s%d", lss.ques[wID].Text, lss.ques[wID].Answer);
+			sprintf_s(buf, sizeof(buf), "%s%d", WinInf.ques[wID].Text, WinInf.ques[wID].Answer);
 			MessageBoxA(buf, "提示", MB_TOPMOST);
 		}
 	}
@@ -362,13 +361,13 @@ LRESULT Students::DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam) {
 void Students::OnMnuExamTestStu()
 {
 	// TODO: 在此添加命令处理程序代码
-	if ((lss.WorkMode == ModExamB) || (lss.WorkMode == ModExamC) || (lss.WorkMode == ModReview)) {
+	if ((WinInf.WorkMode == ModExamB) || (WinInf.WorkMode == ModExamC) || (WinInf.WorkMode == ModReview)) {
 		MessageBoxA("请先完成当前操作");
 		return;
 	}
 	cTxtCourse.SetWindowTextA("请选择测试课程");
-	lss.WorkMode = ModExamA;
-	lss.ExamMode = ExamTest;
+	WinInf.WorkMode = ModExamA;
+	WinInf.ExamMode = ExamTest;
 	ShowMode();
 }
 
@@ -376,25 +375,25 @@ void Students::OnmnuExamTryStu()
 {
 	// TODO: 在此添加命令处理程序代码
 	//ModNone-无,ModStats-统计,ModExamA-测验前,ModExamB-测验中,ModExamC-测验后,ModReview-回顾
-	if ((lss.WorkMode == ModExamB) || (lss.WorkMode == ModExamC) || (lss.WorkMode == ModReview)) {
+	if ((WinInf.WorkMode == ModExamB) || (WinInf.WorkMode == ModExamC) || (WinInf.WorkMode == ModReview)) {
 		MessageBoxA("请先完成当前操作");
 		return;
 	}
 	cTxtCourse.SetWindowTextA("请选择自由练习课程");
-	lss.WorkMode = ModExamA;
-	lss.ExamMode = ExamTry;
+	WinInf.WorkMode = ModExamA;
+	WinInf.ExamMode = ExamTry;
 	ShowMode();
 }
 
 void Students::OnmnuExamRetry() {
 	// TODO: 在此添加命令处理程序代码
-	if ((lss.WorkMode == ModExamB) || (lss.WorkMode == ModExamC) || (lss.WorkMode == ModReview)) {
+	if ((WinInf.WorkMode == ModExamB) || (WinInf.WorkMode == ModExamC) || (WinInf.WorkMode == ModReview)) {
 		MessageBoxA("请先完成当前操作");
 		return;
 	}
 	cTxtCourse.SetWindowTextA("请选择错题练习课程");
-	lss.WorkMode = ModExamA;
-	lss.ExamMode = ExamRetry;
+	WinInf.WorkMode = ModExamA;
+	WinInf.ExamMode = ExamRetry;
 	ShowMode();
 }
 
@@ -402,24 +401,24 @@ void Students::OnmnuStatsTryStu()
 {
 	// TODO: 在此添加命令处理程序代码
 	//ModNone-无,ModStats-统计,ModExamA-测验前,ModExamB-测验中,ModExamC-测验后,ModReview-回顾
-	if ((lss.WorkMode == ModExamB) || (lss.WorkMode == ModExamC) || (lss.WorkMode == ModReview)) {
+	if ((WinInf.WorkMode == ModExamB) || (WinInf.WorkMode == ModExamC) || (WinInf.WorkMode == ModReview)) {
 		MessageBoxA("请完成当前操作后再查询");
 		return;
 	}
 	//cTxtCourse.SetWindowTextA("请选择练习课程");
-	lss.ExamMode = ExamTry;
+	WinInf.ExamMode = ExamTry;
 	StatsStu(RankNum, 0);	//默认按时间序号排序
 }
 
 void Students::OnmnuStatsTestStu()
 {
 	// TODO: 在此添加命令处理程序代码
-	if ((lss.WorkMode == ModExamB) || (lss.WorkMode == ModExamC) || (lss.WorkMode == ModReview)) {
+	if ((WinInf.WorkMode == ModExamB) || (WinInf.WorkMode == ModExamC) || (WinInf.WorkMode == ModReview)) {
 		MessageBoxA("请完成当前操作后再查询");
 		return;
 	}
 	//cTxtCourse.SetWindowTextA("请选择测验课程");
-	lss.ExamMode = ExamTest;
+	WinInf.ExamMode = ExamTest;
 	StatsStu(RankNum, 0);	//默认按时间序号排序
 }
 
@@ -445,7 +444,7 @@ int  Students::StatsStu(int CmdNum, int ClickTime) {	//统计测验成绩
 	cList.DeleteAllItems();
 	for (; cList.DeleteColumn(0) == TRUE;);
 	//--------绘制框架--------
-	lss.WorkMode = ModStats;
+	WinInf.WorkMode = ModStats;
 	ShowMode();
 	//绘制表格标题
 	cList.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT); //设置list风格  
@@ -457,7 +456,7 @@ int  Students::StatsStu(int CmdNum, int ClickTime) {	//统计测验成绩
 	cList.InsertColumn(5, "学号", LVCFMT_CENTER, -1, -1);
 	cList.InsertColumn(6, "正确", LVCFMT_CENTER, -1, -1);
 	cList.InsertColumn(7, "错误", LVCFMT_CENTER, -1, -1);
-	if (lss.ExamMode == ExamTest)
+	if (WinInf.ExamMode == ExamTest)
 		cList.InsertColumn(8, "得分", LVCFMT_CENTER, -1, -1);
 	cList.SetColumnWidth(0, 0);
 	cList.SetColumnWidth(1, 120);
@@ -467,7 +466,7 @@ int  Students::StatsStu(int CmdNum, int ClickTime) {	//统计测验成绩
 	cList.SetColumnWidth(5, 0);
 	cList.SetColumnWidth(6, 40);
 	cList.SetColumnWidth(7, 40);
-	if (lss.ExamMode == ExamTest)
+	if (WinInf.ExamMode == ExamTest)
 		cList.SetColumnWidth(8, 60);
 	//--------填写内容--------
 	sta = InitMySQL(&host);//连接MySQL数据库
@@ -475,12 +474,12 @@ int  Students::StatsStu(int CmdNum, int ClickTime) {	//统计测验成绩
 		if (ClickTime == 0) {	//初始为降序
 			sprintf_s(cmd, sizeof(cmd), "SELECT exam.ID , `TimesTamp` , `Examms` , `CourseID` , `CourseName` ,"
 				" `OperatorID`,`Correct`,`Error`,`Score` FROM `exam` INNER JOIN `course` ON exam.CourseID = course.Course "
-				" Where OperatorID='%d' And `ExamType`='%d' ORDER BY %s DESC;", gs.op.ID, lss.ExamMode, RankType[CmdNum]);
+				" Where OperatorID='%d' And `ExamType`='%d' ORDER BY %s DESC;", gs.op.ID, WinInf.ExamMode, RankType[CmdNum]);
 		}
 		else {	//再点一次为升序
 			sprintf_s(cmd, sizeof(cmd), "SELECT exam.ID , `TimesTamp` , `Examms` , `CourseID` , `CourseName` ,"
 				" `OperatorID`,`Correct`,`Error`,`Score` FROM `exam` INNER JOIN `course` ON exam.CourseID = course.Course "
-				" Where OperatorID='%d' And `ExamType`='%d' ORDER BY %s ASC;", gs.op.ID, lss.ExamMode, RankType[CmdNum]);
+				" Where OperatorID='%d' And `ExamType`='%d' ORDER BY %s ASC;", gs.op.ID, WinInf.ExamMode, RankType[CmdNum]);
 		}
 		mysql_query(&host.mysql, cmd);
 		result = mysql_store_result(&host.mysql);
@@ -498,7 +497,7 @@ int  Students::StatsStu(int CmdNum, int ClickTime) {	//统计测验成绩
 				cList.SetItemText(i, j, row[j]);
 			}
 			cList.SetItemText(i, 2, MsToTime(row[2], Time));	//消耗的时间
-			if (lss.ExamMode == ExamTest)		//只有考试才有分数
+			if (WinInf.ExamMode == ExamTest)		//只有考试才有分数
 				cList.SetItemText(i, 8, row[8]);
 		}
 		mysql_free_result(result);
@@ -510,7 +509,7 @@ int  Students::StatsStu(int CmdNum, int ClickTime) {	//统计测验成绩
 int	Students::ShowMode() {		//切换显示模式
 	//ModNone-无,ModStats-统计,ModExamA-测验前,ModExamB-测验中,ModExamC-测验后,ModReview-回顾
 	int i;
-	if (lss.WorkMode == ModStats) {
+	if (WinInf.WorkMode == ModStats) {
 		cList.ShowWindow(SW_SHOW);
 		cTxtStats.ShowWindow(SW_SHOW);
 	}
@@ -519,8 +518,8 @@ int	Students::ShowMode() {		//切换显示模式
 		cTxtStats.ShowWindow(SW_HIDE);
 	}
 
-	if ((lss.WorkMode == ModStats) || (lss.WorkMode == ModReview)) {
-		if (lss.WorkMode == ModStats)
+	if ((WinInf.WorkMode == ModStats) || (WinInf.WorkMode == ModReview)) {
+		if (WinInf.WorkMode == ModStats)
 			CmdReview.SetWindowTextA("查试卷");
 		else
 			CmdReview.SetWindowTextA("返 回");
@@ -529,14 +528,14 @@ int	Students::ShowMode() {		//切换显示模式
 	else
 		CmdReview.ShowWindow(SW_HIDE);
 
-	if ((lss.WorkMode == ModExamA)) {
+	if ((WinInf.WorkMode == ModExamA)) {
 		CmdStartTest.ShowWindow(SW_SHOW);
 	}
 	else {
 		CmdStartTest.ShowWindow(SW_HIDE);
 	}
 
-	if ((lss.WorkMode == ModExamA) || (lss.WorkMode == ModExamB) || (lss.WorkMode == ModExamC) || (lss.WorkMode == ModReview)) {
+	if ((WinInf.WorkMode == ModExamA) || (WinInf.WorkMode == ModExamB) || (WinInf.WorkMode == ModExamC) || (WinInf.WorkMode == ModReview)) {
 		cTxtCourse.ShowWindow(SW_SHOW);
 		InitCmbCourse();
 		CmbCourse.ShowWindow(SW_SHOW);
@@ -546,19 +545,19 @@ int	Students::ShowMode() {		//切换显示模式
 		CmbCourse.ShowWindow(SW_HIDE);
 	}
 
-	if (lss.WorkMode == ModExamA)
+	if (WinInf.WorkMode == ModExamA)
 		CmbCourse.EnableWindow(TRUE);
 	else
 		CmbCourse.EnableWindow(FALSE);
 
-	if (lss.WorkMode == ModExamB)
+	if (WinInf.WorkMode == ModExamB)
 		CmdSubmit.ShowWindow(SW_SHOW);
 	else
 		CmdSubmit.ShowWindow(SW_HIDE);
 
-	if (lss.WorkMode == ModExamC) {
+	if (WinInf.WorkMode == ModExamC) {
 		CmdTry.ShowWindow(SW_SHOW);
-		if (lss.RemainingSec >= 0)
+		if (WinInf.RemainingSec >= 0)
 			CmdTry.EnableWindow(TRUE);
 		else
 			CmdTry.EnableWindow(FALSE);
@@ -577,7 +576,7 @@ int	Students::ShowMode() {		//切换显示模式
 		}
 	}
 
-	if ((lss.WorkMode == ModExamB) || (lss.WorkMode == ModExamC) || (lss.WorkMode == ModReview)) {
+	if ((WinInf.WorkMode == ModExamB) || (WinInf.WorkMode == ModExamC) || (WinInf.WorkMode == ModReview)) {
 		for (i = 0; i < 30; i++) {
 			if (Question[i].m_hWnd != NULL) Question[i].ShowWindow(SW_SHOW);
 			if (Answer[i].m_hWnd != NULL) Answer[i].ShowWindow(SW_SHOW);
@@ -604,17 +603,17 @@ void Students::OnTimer(UINT_PTR nIDEvent)
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	char buf[256];
 	DWORD ExamNow = GetTickCount();
-	int ExamSec = (int)((ExamNow - lss.ExamStart) / 1000);
-	lss.RemainingSec = 1200 - ExamSec;
+	int ExamSec = (int)((ExamNow - WinInf.ExamStart) / 1000);
+	WinInf.RemainingSec = 1200 - ExamSec;
 	int mme = ExamSec / 60;
 	int sse = ExamSec % 60;
-	int mmr = lss.RemainingSec / 60;
-	int ssr = lss.RemainingSec % 60;
+	int mmr = WinInf.RemainingSec / 60;
+	int ssr = WinInf.RemainingSec % 60;
 	sprintf_s(buf, sizeof(buf), "已用时间:%02d分%02d秒", mme, sse);
 	TxtNote2.SetWindowTextA(buf);
 	sprintf_s(buf, sizeof(buf), "剩余时间:%02d分%02d秒", mmr, ssr);
 	TxtNote.SetWindowTextA(buf);
-	if (lss.RemainingSec <= 0)
+	if (WinInf.RemainingSec <= 0)
 		OnBnClickedCmdsubmit();//时间到强制提交
 	CDialogEx::OnTimer(nIDEvent);
 }
@@ -623,8 +622,8 @@ void Students::OnBnClickedCmdreview()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	//ModNone-无,ModStats-统计,ModExamA-测验前,ModExamB-测验中,ModExamC-测验后,ModReview-回顾
-	if (lss.WorkMode == ModReview) {	//按钮双重定义，回顾模式下再次点击为返回统计模式
-		lss.WorkMode = ModStats;
+	if (WinInf.WorkMode == ModReview) {	//按钮双重定义，回顾模式下再次点击为返回统计模式
+		WinInf.WorkMode = ModStats;
 		ShowMode();
 		return;
 	}
@@ -654,7 +653,7 @@ void Students::OnBnClickedCmdreview()
 		return;
 	}
 
-	lss.WorkMode = ModReview;
+	WinInf.WorkMode = ModReview;
 	ShowMode();
 
 	MySQLHostVariable host;
@@ -679,8 +678,8 @@ void Students::OnBnClickedCmdreview()
 		}
 		for (i = 0; i < j; i++) {
 			row = mysql_fetch_row(result);
-			lss.ques[i].ID = atoi(row[1]);
-			lss.ques[i].UserAnswer = atoi(row[2]);
+			WinInf.ques[i].ID = atoi(row[1]);
+			WinInf.ques[i].UserAnswer = atoi(row[2]);
 			Answer[i].SetWindowTextA(row[2]);
 			Answer[i].EnableWindow(FALSE);
 		}
@@ -691,26 +690,26 @@ void Students::OnBnClickedCmdreview()
 			Answer[i].EnableWindow(FALSE);
 		}
 		for (i = 0; i < j; i++) {
-			sprintf_s(cmd, sizeof(cmd), "Select `ID`,`Text`,`Answer` From `Questions` Where `ID`='%d';", lss.ques[i].ID);
+			sprintf_s(cmd, sizeof(cmd), "Select `ID`,`Text`,`Answer` From `Questions` Where `ID`='%d';", WinInf.ques[i].ID);
 			mysql_query(&host.mysql, cmd);
 			result = mysql_store_result(&host.mysql);
 			ASSERT(result != NULL);
 			row = mysql_fetch_row(result);
 			ASSERT(row != NULL);
-			strcpy_s(lss.ques[i].Text, sizeof(lss.ques[i].Text), row[1]);
-			lss.ques[i].Answer = atoi(row[2]);
-			for (int k = 0; k < sizeof(lss.ques[i].Text) - 1; k++) {
-				if (lss.ques[i].Text[k] == 0) {//必要时为试题字符串尾部加'='字符
-					if (lss.ques[i].Text[k - 1] == '=')
+			strcpy_s(WinInf.ques[i].Text, sizeof(WinInf.ques[i].Text), row[1]);
+			WinInf.ques[i].Answer = atoi(row[2]);
+			for (int k = 0; k < sizeof(WinInf.ques[i].Text) - 1; k++) {
+				if (WinInf.ques[i].Text[k] == 0) {//必要时为试题字符串尾部加'='字符
+					if (WinInf.ques[i].Text[k - 1] == '=')
 						break;
 					else {
-						lss.ques[i].Text[k] = '=';
-						lss.ques[i].Text[k + 1] = 0;
+						WinInf.ques[i].Text[k] = '=';
+						WinInf.ques[i].Text[k + 1] = 0;
 					}
 				}
 			}
-			Question[i].SetWindowTextA(lss.ques[i].Text);//显示试题字符串
-			if (lss.ques[i].Answer == lss.ques[i].UserAnswer) {
+			Question[i].SetWindowTextA(RealChar(WinInf.ques[i].Text));//显示试题字符串
+			if (WinInf.ques[i].Answer == WinInf.ques[i].UserAnswer) {
 				Prompt[i].ShowWindow(SW_HIDE);
 			}
 			else {
@@ -786,9 +785,9 @@ static int RndExchQues(int size, int tim) {//随机交换试题次序
 	for (i = 0; i < tim; i++) {
 		x = abs(rand()) % size;
 		for (y = x; y == x; y = abs(rand()) % size);//.....A
-		qu = lss.ques[x];
-		lss.ques[x] = lss.ques[y];
-		lss.ques[y] = qu;
+		qu = WinInf.ques[x];
+		WinInf.ques[x] = WinInf.ques[y];
+		WinInf.ques[y] = qu;
 	}
 	return TRUE;
 }
@@ -803,7 +802,7 @@ void Students::OnBnClickedCmdstarttest()
 	char buf[72];
 	char cmd[1024];
 	int i, j, k, m;
-	memset(lss.ques, 0, sizeof(lss.ques));
+	memset(WinInf.ques, 0, sizeof(WinInf.ques));
 	sta = InitMySQL(&host);//连接MySQL数据库
 	if (sta == TRUE) {
 		CmbCourse.GetWindowTextA(buf, sizeof(buf));
@@ -811,9 +810,9 @@ void Students::OnBnClickedCmdstarttest()
 		mysql_query(&host.mysql, cmd);
 		result = mysql_store_result(&host.mysql);
 		row = mysql_fetch_row(result);
-		lss.CourseID = atoi(row[0]);
+		WinInf.CourseID = atoi(row[0]);
 		mysql_free_result(result);
-		if (lss.ExamMode == ExamRetry)
+		if (WinInf.ExamMode == ExamRetry)
 			sprintf_s(cmd, sizeof(cmd), "SELECT questions.ID,course.Course,questions.Text,"
 				"questions.Answer,questions.Answer2,sum(examdetails.Correct),sum(examdetails.Error)"
 				"FROM examdetails INNER JOIN exam ON examdetails.ExamID = exam.ID "
@@ -821,10 +820,10 @@ void Students::OnBnClickedCmdstarttest()
 				"INNER JOIN course ON questions.course = course.Course "
 				"Where exam.OperatorID='%d' and course.Course='%d' "
 				"GROUP BY questions.ID ORDER BY sum(examdetails.Error)/(sum(examdetails.Correct)+"
-				"sum(examdetails.Error)) DESC,sum(examdetails.Error) DESC;", gs.op.ID, lss.CourseID);
+				"sum(examdetails.Error)) DESC,sum(examdetails.Error) DESC;", gs.op.ID, WinInf.CourseID);
 		else
 			sprintf_s(cmd, sizeof(cmd), "Select `ID`,`Course`,`Text`,`Answer`,`Answer2` "
-				" From `Questions` Where `Course`='%d' order by `ID`;", lss.CourseID);
+				" From `Questions` Where `Course`='%d' order by `ID`;", WinInf.CourseID);
 		mysql_query(&host.mysql, cmd);
 		result = mysql_store_result(&host.mysql);
 		if (result != NULL)
@@ -834,16 +833,16 @@ void Students::OnBnClickedCmdstarttest()
 		for (i = 0, m = 0; ((i < j) && (m < 30)); i++) {	//i当前记录号,j总记录数,m已读取数
 			//读入变量ques中
 			row = mysql_fetch_row(result);
-			if (lss.ExamMode == ExamRetry) {	//错题模式下不读取正确题目
+			if (WinInf.ExamMode == ExamRetry) {	//错题模式下不读取正确题目
 				if (atoi(row[6]) == 0)
 					break;
 			}
-			if (ReadOrSkip(i, j, 30 - m, 30, lss.ExamMode) == TRUE) {//决定是否读取当前记录
-				lss.ques[m].ID = atoi(row[0]);
-				lss.ques[m].course = atoi(row[1]);
-				strcpy_s(lss.ques[m].Text, sizeof(lss.ques[m].Text), row[2]);
-				lss.ques[m].Answer = atoi(row[3]);
-				lss.ques[m].Answer2 = atoi(row[4]);
+			if (ReadOrSkip(i, j, 30 - m, 30, WinInf.ExamMode) == TRUE) {//决定是否读取当前记录
+				WinInf.ques[m].ID = atoi(row[0]);
+				WinInf.ques[m].course = atoi(row[1]);
+				strcpy_s(WinInf.ques[m].Text, sizeof(WinInf.ques[m].Text), row[2]);
+				WinInf.ques[m].Answer = atoi(row[3]);
+				WinInf.ques[m].Answer2 = atoi(row[4]);
 				m++;
 			}
 		}
@@ -852,24 +851,24 @@ void Students::OnBnClickedCmdstarttest()
 	};//读入试题
 	if (m == 0) {
 		MessageBoxA("该课程试题不足", "提示");
-		lss.WorkMode = ModExamA;
+		WinInf.WorkMode = ModExamA;
 		ShowMode();
 		return;
 	}
-	if (lss.ExamMode != ExamRetry)	//练习模式和考试模式随机交换试题次序
+	if (WinInf.ExamMode != ExamRetry)	//练习模式和考试模式随机交换试题次序
 		RndExchQues(m, 30);		//错题模式不交换，维持错误率高的题目在前面
 	for (i = 0; i < m; i++) {//显示正常试题
-		for (k = 0; k < sizeof(lss.ques[i].Text) - 1; k++) {
-			if (lss.ques[i].Text[k] == 0) {//必要时为试题字符串尾部加'='字符
-				if (lss.ques[i].Text[k - 1] == '=')
+		for (k = 0; k < sizeof(WinInf.ques[i].Text) - 1; k++) {
+			if (WinInf.ques[i].Text[k] == 0) {//必要时为试题字符串尾部加'='字符
+				if (WinInf.ques[i].Text[k - 1] == '=')
 					break;
 				else {
-					lss.ques[i].Text[k] = '=';
-					lss.ques[i].Text[k + 1] = 0;
+					WinInf.ques[i].Text[k] = '=';
+					WinInf.ques[i].Text[k + 1] = 0;
 				}
 			}
 		}
-		Question[i].SetWindowTextA(lss.ques[i].Text);//显示试题字符串
+		Question[i].SetWindowTextA(RealChar(WinInf.ques[i].Text));//显示试题字符串
 		Answer[i].EnableWindow(TRUE);
 		Answer[i].SetWindowTextA("");
 	}
@@ -880,9 +879,9 @@ void Students::OnBnClickedCmdstarttest()
 	}
 	sprintf_s(cmd, sizeof(cmd), "题量：%d道    满分100分     测验时间20分钟", m);
 	TxtNote1.SetWindowTextA(cmd);
-	lss.ExamStart = GetTickCount();//记录测验开始时间
+	WinInf.ExamStart = GetTickCount();//记录测验开始时间
 	SetTimer(1, 1000, NULL);
-	lss.WorkMode = ModExamB;
+	WinInf.WorkMode = ModExamB;
 	ShowMode();
 }
 
@@ -890,11 +889,11 @@ void Students::OnBnClickedCmdstarttest()
 void Students::OnmnuStatsRetryStu()
 {
 	// TODO: 在此添加命令处理程序代码
-	if ((lss.WorkMode == ModExamB) || (lss.WorkMode == ModExamC) || (lss.WorkMode == ModReview)) {
+	if ((WinInf.WorkMode == ModExamB) || (WinInf.WorkMode == ModExamC) || (WinInf.WorkMode == ModReview)) {
 		MessageBoxA("请完成当前操作后再查询");
 		return;
 	}
 	//cTxtCourse.SetWindowTextA("请选择练习课程");
-	lss.ExamMode = ExamRetry;
+	WinInf.ExamMode = ExamRetry;
 	StatsStu(RankNum, 0);	//默认按时间序号排序
 }

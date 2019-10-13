@@ -18,7 +18,7 @@ int PwdCode(char *s1, char *s2) {	//用户名+密码编码
 	long l;
 	for (l = 0, j = 0; s1[j] != 0; j++) {
 		for (i = 0; i < 3; i++)
-			l = l ^ (l << 5);
+			l = l ^ (l << 5);		//尽量填满32位
 		l = l ^ s1[j];
 	}
 	for (j = 0; s2[j] != 0; j++) {
@@ -40,12 +40,24 @@ int ValidIP(char * str)	//校验IP地址合法性
 		return FALSE;
 }
 
-char * RealChar(char * str) {		//转换*、/符号为×、÷
+char * RealChar(char * str) {		//转换*、/为×、÷便于显示
+	char t[EXPLEN] = { 0 };
 	char * p = str;
-	while (*p) {	//逐个查找、替换
+	while (*p) {	//逐个对比并写入新字符串
 		if (*p == '*') {
-			char * t = p;
-			return 0;
+			strcat_s(t, "×");
 		}
+		else if (*p == '/') {
+			strcat_s(t, "÷");
+		}
+		else {
+			//非×、÷字符保持原样
+			int length = strlen(t);	//字符串t长度
+			t[length] = *p;		//即在字符串末尾添加
+			t[length + 1] = 0;	//防止字符串尾部的0被破坏
+		}
+		p++;
 	}
+	strcpy_s(str, EXPLEN, t);	//因字符串t为局部变量，在返回后会丢失，故复制到字符串str中
+	return str;	//返回复制后的字符串首地址str
 }

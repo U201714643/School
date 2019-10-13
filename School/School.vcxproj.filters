@@ -31,23 +31,23 @@
     <Filter Include="源文件\Support">
       <UniqueIdentifier>{ae601bb5-1e4c-47d9-9c70-6cf87c748a98}</UniqueIdentifier>
     </Filter>
-    <Filter Include="头文件\Admin">
-      <UniqueIdentifier>{2632596b-5832-4f81-9c79-d2e3f1eb7565}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="头文件\LogIn">
-      <UniqueIdentifier>{8fb84122-40dc-4a87-bd12-8363c03ec058}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="头文件\Student">
-      <UniqueIdentifier>{137032f2-b31c-4626-9fe3-fd1af715545d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="头文件\Teacher">
-      <UniqueIdentifier>{1431e34e-235f-4157-a1b0-5304e9127f06}</UniqueIdentifier>
-    </Filter>
     <Filter Include="头文件\Support">
       <UniqueIdentifier>{c4bf7e85-8c63-4a4d-8da6-858097f7decd}</UniqueIdentifier>
     </Filter>
     <Filter Include="头文件\System">
       <UniqueIdentifier>{70ea4b85-9620-4c9e-ae73-008238037ffc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\System\Admin">
+      <UniqueIdentifier>{2632596b-5832-4f81-9c79-d2e3f1eb7565}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\System\LogIn">
+      <UniqueIdentifier>{8fb84122-40dc-4a87-bd12-8363c03ec058}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\System\Student">
+      <UniqueIdentifier>{137032f2-b31c-4626-9fe3-fd1af715545d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\System\Teacher">
+      <UniqueIdentifier>{1431e34e-235f-4157-a1b0-5304e9127f06}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -61,28 +61,28 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="admin.h">
-      <Filter>头文件\Admin</Filter>
+      <Filter>头文件\System\Admin</Filter>
     </ClInclude>
     <ClInclude Include="Approval.h">
-      <Filter>头文件\Admin</Filter>
+      <Filter>头文件\System\Admin</Filter>
     </ClInclude>
     <ClInclude Include="NewUser.h">
-      <Filter>头文件\LogIn</Filter>
+      <Filter>头文件\System\LogIn</Filter>
     </ClInclude>
     <ClInclude Include="NewPwd.h">
-      <Filter>头文件\LogIn</Filter>
+      <Filter>头文件\System\LogIn</Filter>
     </ClInclude>
     <ClInclude Include="School.h">
-      <Filter>头文件\LogIn</Filter>
+      <Filter>头文件\System\LogIn</Filter>
     </ClInclude>
     <ClInclude Include="SchoolDlg.h">
-      <Filter>头文件\LogIn</Filter>
+      <Filter>头文件\System\LogIn</Filter>
     </ClInclude>
     <ClInclude Include="Students.h">
-      <Filter>头文件\Student</Filter>
+      <Filter>头文件\System\Student</Filter>
     </ClInclude>
     <ClInclude Include="Teacher.h">
-      <Filter>头文件\Teacher</Filter>
+      <Filter>头文件\System\Teacher</Filter>
     </ClInclude>
     <ClInclude Include="Support.h">
       <Filter>头文件\Support</Filter>
