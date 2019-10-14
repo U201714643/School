@@ -74,11 +74,12 @@ BEGIN_MESSAGE_MAP(Admin, CDialogEx)
 	ON_COMMAND(ID_ApprovalUser, &Admin::OnApprovalUser)
 	ON_COMMAND(ID_mnuAutoApproval, &Admin::OnmnuAutoApproval)
 	ON_WM_TIMER()
-	ON_NOTIFY(NM_CLICK, IDC_LIST, &Admin::OnNMClickList)
+//	ON_NOTIFY(NM_CLICK, IDC_LIST, &Admin::OnNMClickList)
 	ON_WM_CLOSE()
 	ON_COMMAND(ID_mnuTeacher, &Admin::Onmnuteacher)
 	ON_BN_CLICKED(IDC_CmdApprovalTask, &Admin::OnBnClickedCmdapprovaltask)
 	ON_BN_CLICKED(IDC_CmdSave, &Admin::OnBnClickedCmdsave)
+	ON_NOTIFY(HDN_ITEMCLICK, 0, &Admin::OnHdnItemclickList)
 END_MESSAGE_MAP()
 
 
@@ -160,7 +161,7 @@ BOOL Admin::OnInitDialog()
 		CloseMySQL(&host);	//关闭MySQL连接	
 	};
 	AWinInf.hTreeItemManage = cTree.InsertItem("教学任务分配", TVI_ROOT);//在根结点上添加“教学任务分配”
-	ChMode(WMNone);
+	ChMode(WMNone, 0, 0);
 	return TRUE;
 }
 
@@ -254,27 +255,30 @@ void Admin::OnTvnSelchangedTree(NMHDR *pNMHDR, LRESULT *pResult)
 		if (ItemP == AWinInf.hTreeItemCourse) {		//用户点击选择某课程
 			ItemText = cTree.GetItemText(hItem);
 			strcpy_s(AWinInf.ItemText, sizeof(AWinInf.ItemText), ItemText);
-			ChMode(WMQust);
+			ChMode(WMQust, 0, 0);
 		}
 		else if (ItemP == AWinInf.hTreeItemSchool) {//用户点击选择某班级
 			ItemText = cTree.GetItemText(hItem);
 			strcpy_s(AWinInf.ItemText, sizeof(AWinInf.ItemText), ItemText);
-			ChMode(WMOper);
+			ChMode(WMOper, 0, 0);
 		}
 	}
 	*pResult = 0;
 }
 
 int Admin::TeacherManage() {//教师分工管理模式
-	ChMode(WMManage);
+	ChMode(WMManage, 0, 0);
 	return TRUE;
 }
 
-int Admin::ChMode(int mode) {//改变工作模式
+int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 	//#define WMNone 0		//工作模式-无
 	//#define WMOper 1		//工作模式-学员管理
 	//#define WMQust 2		//工作模式-题库管理
 	//#define WMManage 3	//工作模式-教学权分配
+	//--------仅用于教学权分配--------
+	static char *RankType[4] = { "`OperatorID`","`OperatorID`","grade.`ID`","manage.`Right`"};	//默认（内部序号），姓名（内部序号），执教班级，权限
+	//--------其余情况无需分类处理--------
 	MySQLHostVariable host;
 	MYSQL_RES *result;
 	MYSQL_ROW row;
@@ -282,7 +286,7 @@ int Admin::ChMode(int mode) {//改变工作模式
 	int i, j, n;
 	char buf[EXPLEN];
 	char cmd[512];
-	AWinInf.WorkMode = mode;
+	AWinInf.WorkMode = Mode;
 	ListCtrl.DeleteAllItems();
 	for (; ListCtrl.DeleteColumn(0) == TRUE;);
 
@@ -321,17 +325,25 @@ int Admin::ChMode(int mode) {//改变工作模式
 		};
 		//----------绘制表格标题----------
 		ListCtrl.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT); //设置list风格  
-		ListCtrl.InsertColumn(0, "序号", LVCFMT_CENTER, -1, -1);
-		ListCtrl.InsertColumn(1, "学号", LVCFMT_CENTER, -1, -1);
-		ListCtrl.InsertColumn(2, "姓名", LVCFMT_CENTER, -1, -1);
-		ListCtrl.InsertColumn(3, "权限", LVCFMT_CENTER, -1, -1);
+		ListCtrl.InsertColumn(0, "序  号", LVCFMT_CENTER, -1, -1);
+		if (AWinInf.GradeID != 0)	//学生显示学号，教师显示工号
+			ListCtrl.InsertColumn(1, "学  号", LVCFMT_CENTER, -1, -1);
+		else ListCtrl.InsertColumn(1, "工  号", LVCFMT_CENTER, -1, -1);
+		ListCtrl.InsertColumn(2, "姓  名", LVCFMT_CENTER, -1, -1);
+		ListCtrl.InsertColumn(3, "权  限", LVCFMT_CENTER, -1, -1);
 		ListCtrl.SetColumnWidth(0, 0);
 		ListCtrl.SetColumnWidth(1, 80);
 		ListCtrl.SetColumnWidth(2, 80);
 		ListCtrl.SetColumnWidth(3, 80);
 		//----------获得表格内容----------
-		sprintf_s(cmd, sizeof(cmd), "Select `ID`,`No`,`user`,`right`  From `operator` "
-			" Where `Grade`='%d' order by `right` DESC,`No` ASC;", AWinInf.GradeID);
+		if (CilckTime == 0) {	//初始为降序，且只按学号排序
+			sprintf_s(cmd, sizeof(cmd), "Select `ID`,`No`,`user`,`right`  From `operator` "
+				" Where `Grade`='%d' order by `right` DESC,`No` ASC;", AWinInf.GradeID);
+		}
+		else {	//再点一次为升序
+			sprintf_s(cmd, sizeof(cmd), "Select `ID`,`No`,`user`,`right`  From `operator` "
+				" Where `Grade`='%d' order by `right` ASC,`No` ASC;", AWinInf.GradeID);
+		}
 		mysql_query(&host.mysql, cmd);
 		result = mysql_store_result(&host.mysql);
 		if (result != NULL)
@@ -397,12 +409,12 @@ int Admin::ChMode(int mode) {//改变工作模式
 		ListCtrl.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT); //设置list风格  
 		ListCtrl.InsertColumn(0, "  ID  ", LVCFMT_CENTER, -1, -1);
 		ListCtrl.InsertColumn(1, "序  号", LVCFMT_CENTER, -1, -1);
-		ListCtrl.InsertColumn(2, "题  干", LVCFMT_RIGHT, -1, -1);
-		ListCtrl.InsertColumn(3, "答  案", LVCFMT_LEFT, -1, -1);
-		ListCtrl.SetColumnWidth(0, 100);
-		ListCtrl.SetColumnWidth(1, 100);
-		ListCtrl.SetColumnWidth(2, 80);
-		ListCtrl.SetColumnWidth(3, 80);
+		ListCtrl.InsertColumn(2, "题  目", LVCFMT_CENTER, -1, -1);
+		ListCtrl.InsertColumn(3, "答  案", LVCFMT_CENTER, -1, -1);
+		ListCtrl.SetColumnWidth(0, 0);
+		ListCtrl.SetColumnWidth(1, 0);
+		ListCtrl.SetColumnWidth(2, 100);
+		ListCtrl.SetColumnWidth(3, 60);
 		sprintf_s(cmd, sizeof(cmd), "Select `ID`,`Text`,`Answer`  From `questions` "
 			" Where `course`='%d' order by `ID` ;", AWinInf.Course);
 		mysql_query(&host.mysql, cmd);
@@ -432,22 +444,31 @@ int Admin::ChMode(int mode) {//改变工作模式
 		CmdSave.EnableWindow(TRUE);
 		CmdDel.SetWindowTextA("取消任务");
 		AWinInf.Course = 0;
-		sta = InitMySQL(&host);//连接MySQL数据库
+		AWinInf.GradeID = 0;	//只有老师才有执教权限一说
+		sta = InitMySQL(&host);	//连接MySQL数据库
 		if (sta != TRUE)	return FALSE;
 		//绘制表格标题
 		ListCtrl.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT); //设置list风格  
 		ListCtrl.InsertColumn(0, "序  号", LVCFMT_CENTER, -1, -1);
-		ListCtrl.InsertColumn(1, "教  师", LVCFMT_CENTER, -1, -1);
+		ListCtrl.InsertColumn(1, "姓  名", LVCFMT_CENTER, -1, -1);
 		ListCtrl.InsertColumn(2, "班  级", LVCFMT_CENTER, -1, -1);
-		ListCtrl.InsertColumn(3, "状态", LVCFMT_CENTER, -1, -1);
-		ListCtrl.SetColumnWidth(0, 20);
+		ListCtrl.InsertColumn(3, "状  态", LVCFMT_CENTER, -1, -1);
+		ListCtrl.SetColumnWidth(0, 0);
 		ListCtrl.SetColumnWidth(1, 80);
-		ListCtrl.SetColumnWidth(2, 160);
+		ListCtrl.SetColumnWidth(2, 120);
 		ListCtrl.SetColumnWidth(3, 80);
-		sprintf_s(cmd, sizeof(cmd), "SELECT manage.ID,`user`,`Name`,manage.`Right` FROM manage "
-			" INNER JOIN operator ON manage.OperatorID = operator.ID "
-			" INNER JOIN grade ON manage.GradeID = grade.ID"
-			" Order By OperatorID DESC;");
+		if (CilckTime == 0) {	//初始为升序
+			sprintf_s(cmd, sizeof(cmd), "SELECT manage.ID,`user`,`Name`,manage.`Right` FROM manage "
+				" INNER JOIN operator ON manage.OperatorID = operator.ID "
+				" INNER JOIN grade ON manage.GradeID = grade.ID"
+				" Order By %s ASC;", RankType[CmdNum]);
+		}
+		else {	//再点一次为降序
+			sprintf_s(cmd, sizeof(cmd), "SELECT manage.ID,`user`,`Name`,manage.`Right` FROM manage "
+				" INNER JOIN operator ON manage.OperatorID = operator.ID "
+				" INNER JOIN grade ON manage.GradeID = grade.ID"
+				" Order By %s DESC;", RankType[CmdNum]);
+		}
 		mysql_query(&host.mysql, cmd);
 		result = mysql_store_result(&host.mysql);
 		if (result != NULL)
@@ -460,9 +481,9 @@ int Admin::ChMode(int mode) {//改变工作模式
 			ListCtrl.SetItemText(i, 1, row[1]);
 			ListCtrl.SetItemText(i, 2, row[2]);
 			if (row[3][0] == '0')
-				ListCtrl.SetItemText(i, 3, "申请");
+				ListCtrl.SetItemText(i, 3, "申请中");
 			else
-				ListCtrl.SetItemText(i, 3, "");
+				ListCtrl.SetItemText(i, 3, "执教中");
 		}
 		mysql_free_result(result);
 		CloseMySQL(&host);	//关闭MySQL连接
@@ -568,7 +589,7 @@ void Admin::OnBnClickedCmdbatch()
 		BatchAddQuestions();
 	else
 		MessageBoxA("无效命令");
-	ChMode(AWinInf.WorkMode);
+	ChMode(AWinInf.WorkMode, 0, 0);
 }
 
 
@@ -678,7 +699,7 @@ void Admin::OnBnClickedCmddel()
 			MessageBoxA("无效命令未执行", "提示");
 		CloseMySQL(&host);	//关闭MySQL连接	
 	}
-	ChMode(AWinInf.WorkMode);
+	ChMode(AWinInf.WorkMode, 0, 0);
 }
 
 
@@ -730,13 +751,16 @@ void Admin::OnTimer(UINT_PTR nIDEvent)
 }
 
 
-void Admin::OnNMClickList(NMHDR *pNMHDR, LRESULT *pResult)
-{
-	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
-	// TODO: 在此添加控件通知处理程序代码
-	//cTree.EnableWindow(FALSE);	//禁用左侧选择
-	*pResult = 0;
-}
+//void Admin::OnNMClickList(NMHDR *pNMHDR, LRESULT *pResult)
+//{
+//	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+//	static int ClickTime = 0;			//防止执行后ClickTime没了
+//	if (pNMItemActivate->iItem == -1)	//未点击到操作栏则直接忽略
+//		return;	
+//	ChMode(AWinInf.WorkMode, ClickTime);//须保持点击时的工作状态
+//	ClickTime = 1 - ClickTime;		//保证ClickTime在01之间循环
+//	*pResult = 0;
+//}
 
 
 void Admin::OnClose()
@@ -789,7 +813,7 @@ void Admin::OnBnClickedCmdapprovaltask()
 		MessageBoxA(cmd, "提示");
 		CloseMySQL(&host);	//关闭MySQL连接	
 	}
-	ChMode(WMManage);
+	ChMode(WMManage, 0, 0);
 }
 
 
@@ -858,4 +882,23 @@ int WriteListCtrl(CListCtrl *ListCtrl, char * Fn) {//表格数据写文本文件
 	}
 	fclose(fp);
 	return TRUE;
+}
+
+
+void Admin::OnHdnItemclickList(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
+	if (AWinInf.WorkMode == WMOper && phdr->iItem != 3) {
+		MessageBoxA("人员管理下只能按权限排序。");
+		return;		//人员员管理下只能按权限排序
+	}
+	if (AWinInf.WorkMode == WMQust) {
+		MessageBoxA("课程管理下排序无效。");
+		return;		//题库管理下无意义
+	}
+	//教学任务管理下排序均有意义
+	static int ClickTime = 0;		//防止执行后ClickTime没了
+	ChMode(AWinInf.WorkMode, phdr->iItem, ClickTime);//须保持点击时的工作状态
+	ClickTime = 1 - ClickTime;		//保证ClickTime在01之间循环
+	*pResult = 0;
 }

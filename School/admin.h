@@ -27,7 +27,7 @@ public:
 	afx_msg void OnBatchQuestions();
 	CTreeCtrl cTree;
 	afx_msg void OnTvnSelchangedTree(NMHDR *pNMHDR, LRESULT *pResult);
-	int ChMode(int mode);	//改变工作模式
+	int ChMode(int Mode, int CmdNum, int CilckTime);	//改变工作模式
 	int TeacherManage();	//教师分工管理模式
 	CStatic TxtNote;
 	CButton CmdClrPwd;
@@ -41,7 +41,7 @@ public:
 	afx_msg void OnApprovalUser();
 	afx_msg void OnmnuAutoApproval();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
-	afx_msg void OnNMClickList(NMHDR *pNMHDR, LRESULT *pResult);
+//	afx_msg void OnNMClickList(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnClose();
 	afx_msg void OnmnuManage();
 	afx_msg void Onmnuteacher();
@@ -51,4 +51,5 @@ public:
 	CButton CmdBatch;
 	afx_msg void OnBnClickedCmdsave();
 	CButton CmdSave;
+	afx_msg void OnHdnItemclickList(NMHDR *pNMHDR, LRESULT *pResult);
 };

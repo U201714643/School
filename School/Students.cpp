@@ -222,7 +222,7 @@ void Students::CreateCtrl(void) {	////设定控件位置
 			Question[i].Create("题干", ES_RIGHT, RectCtrl, this, 15000 + i);
 
 		RectCtrl.left = RectCtrl.right;
-		RectCtrl.right = RectCtrl.left + (long)((RectArea.right - RectArea.left) / 3 * 0.15);
+		RectCtrl.right = RectCtrl.left + (long)((RectArea.right - RectArea.left) / 3 * 0.18);	//需要放下4个数
 		if (Answer[i].m_hWnd == NULL)
 			Answer[i].Create(WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_BORDER, RectCtrl, this, 15100 + i);
 		else
@@ -742,10 +742,10 @@ void Students::OnHdnItemclickList(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
 	// TODO: 在此添加控件通知处理程序代码
-	static int x = 0;			//防止执行后x没了
+	static int ClickTime = 0;			//防止执行后ClickTime没了
 	static int Type[10] = { RankNum,RankNum,RankTime,RankCourse,RankCourse,0,RankOk,RankError,RankScore,RankScore };	//各类查询操作依次对应
-	StatsStu(Type[phdr->iItem], x);
-	x = 1 - x;		//保证x在01之间循环
+	StatsStu(Type[phdr->iItem], ClickTime);
+	ClickTime = 1 - ClickTime;		//保证ClickTime在01之间循环
 	*pResult = 0;
 }
 

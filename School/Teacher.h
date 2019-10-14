@@ -21,7 +21,7 @@ protected:
 	virtual BOOL OnInitDialog();
 	DECLARE_MESSAGE_MAP()
 public:
-	int ChMode(int mode);	//各统计表
+	int ChMode(int Mode, int CmdNum, int CilckTime);	//各统计表
 	int ChManageMode(void);	//分管班级
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedCancel();
@@ -38,4 +38,5 @@ public:
 	afx_msg void OnmnuNewPwd();
 	afx_msg void OnmnuExport();
 	afx_msg void OnBnClickedCmdmanage();
+	afx_msg void OnHdnItemclickList(NMHDR *pNMHDR, LRESULT *pResult);
 };

@@ -56,6 +56,7 @@ BEGIN_MESSAGE_MAP(Teacher, CDialogEx)
 	ON_COMMAND(ID_mnuNewPwd, &Teacher::OnmnuNewPwd)
 	ON_COMMAND(ID_mnuExport, &Teacher::OnmnuExport)
 	ON_BN_CLICKED(IDC_CmdManage, &Teacher::OnBnClickedCmdmanage)
+	ON_NOTIFY(HDN_ITEMCLICK, 0, &Teacher::OnHdnItemclickList)
 END_MESSAGE_MAP()
 
 
@@ -144,8 +145,8 @@ int Teacher::ChManageMode(void) {	//分管班级
 	for (; ListCtrl.DeleteColumn(0) == TRUE;);
 	sta = InitMySQL(&host);//连接MySQL数据库
 	//确定当前选中的课程，查课程ID
-	if (sta != TRUE)	return FALSE;
-
+	if (sta != TRUE)	
+		return FALSE;
 	mysql_query(&host.mysql, "Select `ID`,`Name`  From `Grade` Order By `ID`;");
 	result = mysql_store_result(&host.mysql);
 	if (result != NULL)
@@ -155,10 +156,10 @@ int Teacher::ChManageMode(void) {	//分管班级
 	GradeID = (int *)malloc(ListLine * sizeof(int));
 	ListCtrl.InsertColumn(0, "ID", LVCFMT_CENTER, -1, -1);
 	ListCtrl.InsertColumn(1, "班  级", LVCFMT_CENTER, -1, -1);
-	ListCtrl.InsertColumn(2, "分  管", LVCFMT_CENTER, -1, -1);
-	ListCtrl.SetColumnWidth(0, 50);
+	ListCtrl.InsertColumn(2, "状  态", LVCFMT_CENTER, -1, -1);
+	ListCtrl.SetColumnWidth(0, 0);
 	ListCtrl.SetColumnWidth(1, 100);
-	ListCtrl.SetColumnWidth(2, 50);
+	ListCtrl.SetColumnWidth(2, 75);
 	for (i = 0; i < ListLine; i++) {
 		row = mysql_fetch_row(result);
 		GradeID[i] = atoi(row[0]);//每行对应的班级ID
@@ -167,8 +168,7 @@ int Teacher::ChManageMode(void) {	//分管班级
 		ListCtrl.SetItemText(i, 2, "");
 	}
 	mysql_free_result(result);
-
-	sprintf_s(cmd, sizeof(cmd), "Select `GradeID`,`Right`  From `Manage` Where `OperatorID`='%d';", gs.op.ID);
+	sprintf_s(cmd, sizeof(cmd), "Select `GradeID`,`Right`  From `Manage` Where `OperatorID`='%d'", gs.op.ID);
 	mysql_query(&host.mysql, cmd);
 	result = mysql_store_result(&host.mysql);
 	if (result != NULL)
@@ -181,9 +181,9 @@ int Teacher::ChManageMode(void) {	//分管班级
 		for (j = 0; j < ListLine; j++) {
 			if (GradeID[j] == k) {
 				if (atoi(row[1]) == 1)
-					ListCtrl.SetItemText(j, 2, "管班");
+					ListCtrl.SetItemText(j, 2, "执教中");
 				else
-					ListCtrl.SetItemText(j, 2, "申请");
+					ListCtrl.SetItemText(j, 2, "申请中");
 				break;
 			}
 		}
@@ -194,7 +194,7 @@ int Teacher::ChManageMode(void) {	//分管班级
 	return TRUE;
 }
 
-int Teacher::ChMode(int Mode) {
+int Teacher::ChMode(int Mode, int CmdNum, int CilckTime) {
 	//0-无,1-试题,2-练习,3-学生
 	MySQLHostVariable host;
 	MYSQL_RES *result;
@@ -249,28 +249,41 @@ int Teacher::ChMode(int Mode) {
 		BufNow[-3] = 0;
 	mysql_free_result(result);
 	if ((Mode == 1) || (Mode == 2)) {
+		//--------仅用于题目查看--------
+		static char *RankType[7] = { "questions.ID","","","" ,"SUM(examdetails.Correct)" ,"SUM(examdetails.Error)" ,"SUM(examdetails.Correct)/(SUM(examdetails.Error)+SUM(examdetails.Correct))" };
+		//前四个均为无效操作（默认为问题内部编号）,正确数，错误数，正确率
 		//绘制表格标题
 		ListCtrl.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT); //设置list风格  
 		ListCtrl.InsertColumn(0, "ID", LVCFMT_CENTER, -1, -1);
 		ListCtrl.InsertColumn(1, "序  号", LVCFMT_CENTER, -1, -1);
-		ListCtrl.InsertColumn(2, "题  干", LVCFMT_RIGHT, -1, -1);
-		ListCtrl.InsertColumn(3, "答  案", LVCFMT_LEFT, -1, -1);
-		ListCtrl.InsertColumn(4, "正确数", LVCFMT_RIGHT, -1, -1);
-		ListCtrl.InsertColumn(5, "错误数", LVCFMT_RIGHT, -1, -1);
-		ListCtrl.InsertColumn(6, "正确率(%)", LVCFMT_RIGHT, -1, -1);
-		ListCtrl.SetColumnWidth(0, 50);
-		ListCtrl.SetColumnWidth(1, 50);
+		ListCtrl.InsertColumn(2, "题  干", LVCFMT_CENTER, -1, -1);
+		ListCtrl.InsertColumn(3, "答  案", LVCFMT_CENTER, -1, -1);
+		ListCtrl.InsertColumn(4, "正确数", LVCFMT_CENTER, -1, -1);
+		ListCtrl.InsertColumn(5, "错误数", LVCFMT_CENTER, -1, -1);
+		ListCtrl.InsertColumn(6, "正确率(%)", LVCFMT_CENTER, -1, -1);
+		ListCtrl.SetColumnWidth(0, 0);
+		ListCtrl.SetColumnWidth(1, 0);
 		ListCtrl.SetColumnWidth(2, 100);
-		ListCtrl.SetColumnWidth(3, 80);
-		ListCtrl.SetColumnWidth(4, 80);
-		ListCtrl.SetColumnWidth(5, 80);
+		ListCtrl.SetColumnWidth(3, 60);
+		ListCtrl.SetColumnWidth(4, 60);
+		ListCtrl.SetColumnWidth(5, 60);
 		ListCtrl.SetColumnWidth(6, 80);
-		sprintf_s(cmd, sizeof(cmd), "SELECT questions.ID,questions.Text,questions.Answer,"
-			"SUM(examdetails.Correct),SUM(examdetails.Error)FROM examdetails INNER JOIN exam ON "
-			"examdetails.ExamID = exam.ID INNER JOIN operator ON exam.OperatorID = operator.ID INNER JOIN "
-			"grade ON operator.grade = grade.ID INNER JOIN questions ON examdetails.QuestID = questions.ID "
-			"WHERE ((%s)&&(ExamType='%d')&&(exam.CourseID='%d')) "
-			"GROUP BY questions.ID ORDER BY questions.ID;", buf, Mode - 1, ts.Course);
+		if (CilckTime == 0) {	//默认为降序
+			sprintf_s(cmd, sizeof(cmd), "SELECT questions.ID,questions.Text,questions.Answer,"
+				"SUM(examdetails.Correct),SUM(examdetails.Error)FROM examdetails INNER JOIN exam ON "
+				"examdetails.ExamID = exam.ID INNER JOIN operator ON exam.OperatorID = operator.ID INNER JOIN "
+				"grade ON operator.grade = grade.ID INNER JOIN questions ON examdetails.QuestID = questions.ID "
+				"WHERE ((%s)&&(ExamType='%d')&&(exam.CourseID='%d')) "
+				"GROUP BY questions.ID ORDER BY %s DESC;", buf, Mode - 1, ts.Course, RankType[CmdNum]);
+		}
+		else{	//再点为升序
+			sprintf_s(cmd, sizeof(cmd), "SELECT questions.ID,questions.Text,questions.Answer,"
+				"SUM(examdetails.Correct),SUM(examdetails.Error)FROM examdetails INNER JOIN exam ON "
+				"examdetails.ExamID = exam.ID INNER JOIN operator ON exam.OperatorID = operator.ID INNER JOIN "
+				"grade ON operator.grade = grade.ID INNER JOIN questions ON examdetails.QuestID = questions.ID "
+				"WHERE ((%s)&&(ExamType='%d')&&(exam.CourseID='%d')) "
+				"GROUP BY questions.ID ORDER BY %s ASC;", buf, Mode - 1, ts.Course, RankType[CmdNum]);
+		}
 		mysql_query(&host.mysql, cmd);
 		result = mysql_store_result(&host.mysql);
 		if (result != NULL)
@@ -298,26 +311,37 @@ int Teacher::ChMode(int Mode) {
 		mysql_free_result(result);
 	}
 	else if ((Mode == 3) || (Mode == 4)) {
+		//--------仅用于学生信息查看--------
+		static char *RankType[7] = { "grade.ID,operator.`No`","grade.ID,SUM(exam.Correct)/(SUM(exam.Error)+SUM(exam.Correct))","","" ,"SUM(exam.Correct)" ,"SUM(exam.Error)" ,"SUM(exam.Correct)/(SUM(exam.Error)+SUM(exam.Correct))" };
+		//默认为学生内部编号，按班级（+正确率）排序，2、3均为无效操作,正确数，错误数，正确率
 		//绘制表格标题
 		ListCtrl.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT); //设置list风格  
 		ListCtrl.InsertColumn(0, "班级ID", LVCFMT_CENTER, -1, -1);
 		ListCtrl.InsertColumn(1, "班  级", LVCFMT_CENTER, -1, -1);
-		ListCtrl.InsertColumn(2, "学  号", LVCFMT_RIGHT, -1, -1);
-		ListCtrl.InsertColumn(3, "姓  名", LVCFMT_LEFT, -1, -1);
-		ListCtrl.InsertColumn(4, "正确数", LVCFMT_RIGHT, -1, -1);
-		ListCtrl.InsertColumn(5, "错误数", LVCFMT_RIGHT, -1, -1);
-		ListCtrl.InsertColumn(6, "正确率(%)", LVCFMT_RIGHT, -1, -1);
-		ListCtrl.SetColumnWidth(0, 50);
-		ListCtrl.SetColumnWidth(1, 120);
-		ListCtrl.SetColumnWidth(2, 50);
-		ListCtrl.SetColumnWidth(3, 80);
-		ListCtrl.SetColumnWidth(4, 80);
-		ListCtrl.SetColumnWidth(5, 80);
+		ListCtrl.InsertColumn(2, "学  号", LVCFMT_CENTER, -1, -1);
+		ListCtrl.InsertColumn(3, "姓  名", LVCFMT_CENTER, -1, -1);
+		ListCtrl.InsertColumn(4, "正确数", LVCFMT_CENTER, -1, -1);
+		ListCtrl.InsertColumn(5, "错误数", LVCFMT_CENTER, -1, -1);
+		ListCtrl.InsertColumn(6, "正确率(%)", LVCFMT_CENTER, -1, -1);
+		ListCtrl.SetColumnWidth(0, 0);
+		ListCtrl.SetColumnWidth(1, 100);
+		ListCtrl.SetColumnWidth(2, 60);
+		ListCtrl.SetColumnWidth(3, 60);
+		ListCtrl.SetColumnWidth(4, 60);
+		ListCtrl.SetColumnWidth(5, 60);
 		ListCtrl.SetColumnWidth(6, 80);
-		sprintf_s(cmd, sizeof(cmd), "SELECT grade.ID,grade.`Name`,operator.`No`,operator.`user`,"
-			"Sum(exam.Correct),Sum(exam.Error) FROM exam INNER JOIN operator ON exam.OperatorID = operator.ID "
-			"INNER JOIN grade ON operator.grade = grade.ID WHERE ((%s)&&(exam.CourseID='%d')&&(exam.ExamType='%d')) "
-			"GROUP BY grade.ID,operator.`No` ORDER BY grade.ID,operator.`No`", buf, ts.Course, Mode - 3);
+		if (CilckTime == 0) {	//默认为降序
+			sprintf_s(cmd, sizeof(cmd), "SELECT grade.ID,grade.`Name`,operator.`No`,operator.`user`,"
+				"Sum(exam.Correct),Sum(exam.Error) FROM exam INNER JOIN operator ON exam.OperatorID = operator.ID "
+				"INNER JOIN grade ON operator.grade = grade.ID WHERE ((%s)&&(exam.CourseID='%d')&&(exam.ExamType='%d')) "
+				"GROUP BY grade.ID,operator.`No` ORDER BY %s DESC", buf, ts.Course, Mode - 3, RankType[CmdNum]);
+		}
+		else {	//再点为升序
+			sprintf_s(cmd, sizeof(cmd), "SELECT grade.ID,grade.`Name`,operator.`No`,operator.`user`,"
+				"Sum(exam.Correct),Sum(exam.Error) FROM exam INNER JOIN operator ON exam.OperatorID = operator.ID "
+				"INNER JOIN grade ON operator.grade = grade.ID WHERE ((%s)&&(exam.CourseID='%d')&&(exam.ExamType='%d')) "
+				"GROUP BY grade.ID,operator.`No` ORDER BY %s ASC", buf, ts.Course, Mode - 3, RankType[CmdNum]);
+		}
 		mysql_query(&host.mysql, cmd);
 		result = mysql_store_result(&host.mysql);
 		if (result != NULL)
@@ -353,7 +377,7 @@ void Teacher::OnTcnSelchangeTabmod(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	// TODO: 在此添加控件通知处理程序代码
 	ts.WorkMode = cTabMod.GetCurSel() + 1;
-	ChMode(ts.WorkMode);
+	ChMode(ts.WorkMode, 0, 0);
 	*pResult = 0;
 }
 
@@ -380,7 +404,7 @@ void Teacher::OnTvnSelchangedTree(NMHDR *pNMHDR, LRESULT *pResult)
 				cTabMod.ShowWindow(SW_SHOW);
 				cCmdManage.ShowWindow(SW_HIDE);
 				ts.Manage = FALSE;
-				ChMode(ts.WorkMode);
+				ChMode(ts.WorkMode, 0, 0);
 			}
 		}
 	}
@@ -483,4 +507,36 @@ void Teacher::OnBnClickedCmdmanage()
 		CloseMySQL(&host);	//关闭MySQL连接	
 		ChManageMode();
 	}
+}
+
+
+void Teacher::OnHdnItemclickList(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
+	HTREEITEM hItem, ItemP;
+	hItem = cTree.GetSelectedItem();
+	static int ClickTime = 0;		//防止执行后ClickTime没了
+	if (hItem == ts.hTreeItemGrade) {		//进入管班变更模式
+		MessageBoxA("班级教学权限管理模式下排序无效。");
+		return;		//管班变更模式中排序无意义
+	}
+	else {
+		ItemP = cTree.GetParentItem(hItem);
+		if (ItemP == ts.hTreeItemCourse) {	//用户点击选择某课程
+			if (phdr->iItem < 4) {
+				if ((ts.WorkMode == 1) || (ts.WorkMode == 2)) {
+					MessageBoxA("不能对题目和答案排序。");
+					return;		//查看题目模式下，不能对题目和答案排序
+				}
+				else if (phdr->iItem != 1) {
+					MessageBoxA("不能对学号和姓名排序。");	
+					return;		//查看学生答题情况模式下，不能对学号和姓名排序
+				}
+				//否则正常进行查询
+			}
+			ChMode(ts.WorkMode, phdr->iItem, ClickTime);	//进入对应课程
+		}
+	}
+	ClickTime = 1 - ClickTime;		//保证ClickTime在01之间循环*/
+	*pResult = 0;
 }
