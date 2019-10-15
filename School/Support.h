@@ -44,10 +44,13 @@ typedef struct question {
 
 
 typedef struct global {
-	operators op;
+	operators op;	//使用者信息
 }global;
 
+#define Clear(x) memset(x, 0, sizeof(x))	//连续空间清0
+
 int ValidIP(char * str);		//校验IP地址合法性
+int IntFormEidt(CEdit * Edit);	//从文本框中获得数字
 char * RealChar(char * str);		//转换*、/为×、÷便于显示
 int PwdCode(char *s1, char *s2);	//用户名+密码编码
 int CloseMySQL(MySQLHostVariable * host);	//关闭MySQL连接

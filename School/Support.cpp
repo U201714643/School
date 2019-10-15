@@ -61,3 +61,11 @@ char * RealChar(char * str) {		//转换*、/为×、÷便于显示
 	strcpy_s(str, EXPLEN, t);	//因字符串t为局部变量，在返回后会丢失，故复制到字符串str中
 	return str;	//返回复制后的字符串首地址str
 }
+
+int IntFormEidt(CEdit * Edit) {	//从文本框中获得数字
+	char buf[128];	//保存字符串形式的数字
+	Edit->GetWindowTextA(buf, sizeof(buf));	//获得字符串形式的数字
+	if (strlen(buf) == 0)
+		return -1;	//我们的程序正常情况下无负数
+	return atoi(buf);
+}

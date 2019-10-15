@@ -8,46 +8,9 @@
 #include "NewPwd.h"
 #include "afxdialogex.h"
 
-#define  ModNone  0	 //模式-无
-#define  ModStats 1	 //模式-统计
-#define  ModExamA 2	 //模式-测验前
-#define  ModExamB 3	 //模式-测验中
-#define  ModExamC 4	 //模式-测验后
-#define  ModReview 5 //模式-回顾
-
-#define  ExamTest    0	 //答题方式-考试
-#define  ExamTry     1   //答题方式-刷题
-#define  ExamRetry  2	 //答题方式-错题本
-
-#define  RankNum	0	 //排序方式-时间
-#define  RankTime	1	 //排序方式-用时
-#define  RankCourse	2	 //排序方式-课程
-#define  RankOk		3	 //排序方式-正确数
-#define  RankError	4	 //排序方式-错误数
-#define  RankScore	5	 //排序方式-正确率
-
-
-typedef struct studentslocal {	//student窗体共用变量
-	int   WorkMode;	//ModNone-无,ModStats-统计,ModExamA-测验前,ModExamB-测验中,ModExamC-测验后,ModReview-回顾
-	DWORD ExamStart;//测验开始时间(ms)
-	int   RemainingSec;//测验剩余时间(S)
-	long  ExamID;//测验记录ID
-	int   ExamMs;//测验用时
-	int   ExamMode;//答题方式
-	int   CourseID;	//课程ID
-	int   OpertorID;//学员ID
-	int   Correct;//正解题目数
-	int   Error;  //错题数
-	double	Score;//得分
-	question ques[30];	//当前测试题
-}studentslocal;
-
-static int ReadOrSkip(int now, int max, int need, int needmax, int mode);//决定是否读取当前记录
-static int RndExchQues(int size, int tim);//随机交换试题次序
-
-extern global gs;
-studentslocal WinInf;
-
+CFont InsFont;		//引导页面字体
+extern global gs;	//登录者信息
+studentslocal WinInf;	//窗口内通用信息
 
 // Students 对话框
 
@@ -78,6 +41,8 @@ void Students::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDCmdStartTest, CmdStartTest);
 	DDX_Control(pDX, IDC_TxtNote1, TxtNote1);
 	DDX_Control(pDX, IDC_TxtNote2, TxtNote2);
+	//DDX_Control(pDX, IDC_INSTRUCTION, InstructorTxt);
+	DDX_Control(pDX, IDC_EDIT1, InsTxt);
 }
 
 
@@ -134,12 +99,23 @@ BOOL Students::OnInitDialog()
 	Init();
 	return TRUE;
 }
+
 BOOL Students::Init() {	//初始化
-	char buf[72];
-	srand((unsigned int)GetTickCount());
+	char buf[128], AIRec[128];	//AIRec人工智能推荐课程用
+	srand((unsigned int)GetTickCount());	//初始化随机数种子
+	//--------显示窗口标题--------
 	WinInf.OpertorID = gs.op.ID;
 	sprintf_s(buf, sizeof(buf), "欢迎 %s-%s 同学", gs.op.GradeName, gs.op.Name);
 	SetWindowTextA(buf);
+	//--------设置个人信息--------
+	sprintf_s(buf, sizeof(buf), "姓名：%s\r\n班级：%s\r\n学号：%s\r\n%s", gs.op.Name, gs.op.GradeName, gs.op.No, RecCourse(AIRec));//换行必须使用\r\n
+	cTxtStats.SetWindowTextA(buf);
+	//--------设置引导信息--------
+	//设置字体
+	InsFont.CreateFont(26,0,0,0, FW_BOLD, FALSE,FALSE,0,ANSI_CHARSET,OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,DEFAULT_PITCH | FF_SWISS,_T("Arial"));
+	InsTxt.SetFont(&InsFont);
+	InsTxt.SetWindowTextA("请在上方菜单栏中选择一项开始操作\r\n如需练习题目请选择“开始”\r\n如需查看历史记录请选择“统计”\r\n如需修改密码或退出请选择“系统”");
+	//--------初始化窗体--------
 	CmbCourse.SetWindowTextA("");
 	CmbCourse.EnableWindow(TRUE);
 	WinInf.WorkMode = ModNone;
@@ -350,8 +326,10 @@ LRESULT Students::DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam) {
 	if (WM_COMMAND == message) {
 		WORD wID = LOWORD(wParam) - 15300;
 		if ((wID >= 0) && (wID <= 29)) {
-			char buf[72];
-			sprintf_s(buf, sizeof(buf), "%s%d", WinInf.ques[wID].Text, WinInf.ques[wID].Answer);
+			char buf[128];
+			if (WinInf.ques[wID].Answer != -1)		//防止题目被删除
+				sprintf_s(buf, sizeof(buf), "%s%d", WinInf.ques[wID].Text, WinInf.ques[wID].Answer);
+			else sprintf_s(buf, sizeof(buf), "已删除的题目。\n如有疑问请联系您的教师或管理员。");
 			MessageBoxA(buf, "提示", MB_TOPMOST);
 		}
 	}
@@ -434,6 +412,7 @@ int  Students::StatsStu(int CmdNum, int ClickTime) {	//统计测验成绩
 	//RankCourse 2	//排序方式-课程   RankOk 3		//排序方式-正确数
 	//RankError	4	//排序方式-错误数 RankScore 5	//排序方式-正确率
 	static char *RankType[6] = { "exam.ID","`Examms`","`CourseID`","`Correct`","`Error`","`Score`" };	//就是上面6种
+	InsTxt.ShowWindow(SW_HIDE);		//隐藏提示信息
 	MySQLHostVariable host;
 	MYSQL_RES *result;
 	MYSQL_ROW row;
@@ -695,9 +674,14 @@ void Students::OnBnClickedCmdreview()
 			result = mysql_store_result(&host.mysql);
 			ASSERT(result != NULL);
 			row = mysql_fetch_row(result);
-			ASSERT(row != NULL);
-			strcpy_s(WinInf.ques[i].Text, sizeof(WinInf.ques[i].Text), row[1]);
-			WinInf.ques[i].Answer = atoi(row[2]);
+			if (row == NULL) {	//题目被删掉等
+				strcpy_s(WinInf.ques[i].Text, sizeof(WinInf.ques[i].Text), "已删除的题目");
+				WinInf.ques[i].Answer = -1;
+			}
+			else {	//否则正常显示
+				strcpy_s(WinInf.ques[i].Text, sizeof(WinInf.ques[i].Text), row[1]);
+				WinInf.ques[i].Answer = atoi(row[2]);
+			}
 			for (int k = 0; k < sizeof(WinInf.ques[i].Text) - 1; k++) {
 				if (WinInf.ques[i].Text[k] == 0) {//必要时为试题字符串尾部加'='字符
 					if (WinInf.ques[i].Text[k - 1] == '=')
@@ -803,7 +787,8 @@ void Students::OnBnClickedCmdstarttest()
 	char cmd[1024];
 	int i, j, k, m;
 	memset(WinInf.ques, 0, sizeof(WinInf.ques));
-	sta = InitMySQL(&host);//连接MySQL数据库
+	InsTxt.ShowWindow(SW_HIDE);	//隐藏提示信息
+	sta = InitMySQL(&host);		//连接MySQL数据库
 	if (sta == TRUE) {
 		CmbCourse.GetWindowTextA(buf, sizeof(buf));
 		sprintf_s(cmd, sizeof(cmd), "Select `Course`,`CourseName` from `Course` Where `CourseName`='%s';", buf);
@@ -896,4 +881,71 @@ void Students::OnmnuStatsRetryStu()
 	//cTxtCourse.SetWindowTextA("请选择练习课程");
 	WinInf.ExamMode = ExamRetry;
 	StatsStu(RankNum, 0);	//默认按时间序号排序
+}
+
+char * RecCourse(char * resource) {		//推荐的学习课程.
+	MySQLHostVariable host;
+	MYSQL_RES *result;
+	MYSQL_ROW row;
+	int sta;	//状态标志
+	int i, j, n;
+	char cmd[512];
+	//--------连接MySQL数据库--------
+	sta = InitMySQL(&host);
+	if (sta == TRUE) {
+		sprintf_s(cmd, sizeof(cmd), "SELECT exam.ID , `TimesTamp` , `Examms` , `CourseID` , `CourseName` ,"
+			" `OperatorID`,`Correct`,`Error`,`Score` FROM `exam` INNER JOIN `course` ON exam.CourseID = course.Course "
+			" Where OperatorID='%d' And `ExamType`='%d' ORDER BY `CourseID` DESC;", gs.op.ID, ExamTry);
+		//按测试正确率排序
+	}
+	else {
+		sprintf_s(resource, 128, "数据库链接失败。");
+		return resource;
+	}
+	mysql_query(&host.mysql, cmd);
+	result = mysql_store_result(&host.mysql);
+	//--------统计平均成绩--------
+	if (result != NULL)
+		n = (long)result->row_count;//总数
+	else n = 0;
+	if (n == 0) {	//一条记录都没有，无法统计
+		sprintf_s(resource, 128, "您还没有练习记录");
+		return resource;
+	}
+	row = mysql_fetch_row(result);
+	int CourseNum = atoi(row[3]);	//课程总数
+	int * Correct = (int *) malloc(sizeof(int) * (CourseNum + 1));	//存放各正确数
+	int * Error = (int *)malloc(sizeof(int) * (CourseNum + 1));	//存放各正确数
+	memset(Correct, 0, sizeof(int) * (CourseNum + 1));	//清0
+	memset(Error, 0, sizeof(int) * (CourseNum + 1));
+	for (i = 0; i < n; i++) {
+		int CourseID = atoi(row[3]);	//获得课程号
+		Correct[CourseID] += atoi(row[6]);	//统计正确，错误
+		Error[CourseID] += atoi(row[7]);
+		row = mysql_fetch_row(result);	//在进入循环之前获得过一次信息
+	}
+	int AvgMin = 0x7fffffff, MinID = 0;
+	for (i = 1; i <= CourseNum; i++) {
+		if (Correct[i] + Error[i] == 0)
+			continue;	//防止除以0，即被放弃的练习
+		int AvgLocal = Correct[i] * 100 / (Correct[i] + Error[i]);
+		if (AvgLocal < AvgMin) {
+			AvgMin = AvgLocal;
+			MinID = i;
+		}
+	}
+	//--------获得课程名称--------
+	sprintf_s(cmd, sizeof(cmd), "SELECT exam.ID , `TimesTamp` , `Examms` , `CourseID` , `CourseName` ,"
+		" `OperatorID`,`Correct`,`Error`,`Score` FROM `exam` INNER JOIN `course` ON exam.CourseID = course.Course "
+		" Where CourseID='%d';", MinID, ExamTry);	//MinID即平均分最低的课程编号
+	mysql_query(&host.mysql, cmd);
+	result = mysql_store_result(&host.mysql);
+	row = mysql_fetch_row(result);
+	sprintf_s(resource, 128, "根据人工智能计算，您最需要练习的课程为：%s", row[4]);
+	//--------释放空间--------
+	free(Correct);
+	free(Error);
+	mysql_free_result(result);
+	CloseMySQL(&host);	//关闭MySQL连接
+	return resource;	//返回原地址
 }

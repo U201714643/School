@@ -117,6 +117,7 @@
     <ClInclude Include="Students.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Teacher.h" />
+    <ClInclude Include="TestGenor.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Admin.cpp" />
@@ -134,6 +135,7 @@
     <ClCompile Include="Students.cpp" />
     <ClCompile Include="Support.cpp" />
     <ClCompile Include="Teacher.cpp" />
+    <ClCompile Include="TestGenor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="School.rc" />

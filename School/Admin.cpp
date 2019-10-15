@@ -9,6 +9,7 @@
 #include "Combo.h"
 #include "admin.h"
 #include "NewPwd.h"
+#include "TestGenor.h"
 #include "Approval.h"
 
 
@@ -56,6 +57,7 @@ void Admin::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CmdDel, CmdDel);
 	DDX_Control(pDX, IDC_CmdBatch, CmdBatch);
 	DDX_Control(pDX, IDC_CmdSave, CmdSave);
+	DDX_Control(pDX, IDC_TESTGEN, TestGener);
 }
 
 
@@ -80,6 +82,7 @@ BEGIN_MESSAGE_MAP(Admin, CDialogEx)
 	ON_BN_CLICKED(IDC_CmdApprovalTask, &Admin::OnBnClickedCmdapprovaltask)
 	ON_BN_CLICKED(IDC_CmdSave, &Admin::OnBnClickedCmdsave)
 	ON_NOTIFY(HDN_ITEMCLICK, 0, &Admin::OnHdnItemclickList)
+	ON_BN_CLICKED(IDC_TESTGEN, &Admin::OnBnClickedTestgen)
 END_MESSAGE_MAP()
 
 
@@ -292,6 +295,7 @@ int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 
 	if (AWinInf.WorkMode == WMNone) {
 		TxtNote.SetWindowTextA("请选择");
+		TestGener.ShowWindow(SW_HIDE);
 		CmdClrPwd.ShowWindow(SW_HIDE);
 		CmdApprovalTask.ShowWindow(SW_HIDE);
 		CmdBatch.EnableWindow(FALSE);
@@ -301,6 +305,7 @@ int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 	else if (AWinInf.WorkMode == WMOper) {
 		sprintf_s(buf, sizeof(buf), "%s 人员管理", AWinInf.ItemText);
 		TxtNote.SetWindowTextA(buf);
+		TestGener.ShowWindow(SW_HIDE);
 		CmdClrPwd.ShowWindow(SW_SHOW);
 		CmdApprovalTask.ShowWindow(SW_HIDE);
 		CmdBatch.EnableWindow(TRUE);
@@ -381,6 +386,7 @@ int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 	else if (AWinInf.WorkMode == WMQust) {
 		sprintf_s(buf, sizeof(buf), "%s课程 题库管理", AWinInf.ItemText);
 		TxtNote.SetWindowTextA(buf);
+		TestGener.ShowWindow(SW_SHOW);
 		CmdClrPwd.ShowWindow(SW_HIDE);
 		CmdApprovalTask.ShowWindow(SW_HIDE);
 		CmdBatch.EnableWindow(TRUE);
@@ -438,6 +444,7 @@ int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 	else if (AWinInf.WorkMode == WMManage) {
 		sprintf_s(buf, sizeof(buf), "教学任务分配", AWinInf.ItemText);
 		TxtNote.SetWindowTextA(buf);
+		TestGener.ShowWindow(SW_HIDE);
 		CmdClrPwd.ShowWindow(SW_HIDE);
 		CmdApprovalTask.ShowWindow(SW_SHOW);
 		CmdBatch.EnableWindow(FALSE);
@@ -901,4 +908,11 @@ void Admin::OnHdnItemclickList(NMHDR *pNMHDR, LRESULT *pResult)
 	ChMode(AWinInf.WorkMode, phdr->iItem, ClickTime);//须保持点击时的工作状态
 	ClickTime = 1 - ClickTime;		//保证ClickTime在01之间循环
 	*pResult = 0;
+}
+
+
+void Admin::OnBnClickedTestgen()
+{
+	TestGenor t;
+	t.DoModal();
 }

@@ -49,6 +49,12 @@
     <Filter Include="头文件\System\Teacher">
       <UniqueIdentifier>{1431e34e-235f-4157-a1b0-5304e9127f06}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\TestGen">
+      <UniqueIdentifier>{0932be04-3f13-426e-8e54-1a4a7ee93a91}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\TestGen">
+      <UniqueIdentifier>{041476c2-9e07-4ba9-916d-969436ab8c15}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -99,6 +105,9 @@
     <ClInclude Include="targetver.h">
       <Filter>头文件\System</Filter>
     </ClInclude>
+    <ClInclude Include="TestGenor.h">
+      <Filter>头文件\TestGen</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -136,6 +145,9 @@
     </ClCompile>
     <ClCompile Include="MySqlOperation.cpp">
       <Filter>源文件\Support</Filter>
+    </ClCompile>
+    <ClCompile Include="TestGenor.cpp">
+      <Filter>源文件\TestGen</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
