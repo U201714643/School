@@ -82,12 +82,15 @@ BOOL NewUser::OnInitDialog()
 	MYSQL_ROW row;
 	int sta;	//状态标志
 	int  i, j;
-	for (; cCmbType.DeleteString(0) == 1;);//删除初始内容
+	//---------修改初始内容---------
+	for (; cCmbType.DeleteString(0) == 1;);
 	cCmbType.InsertString(0, "学生");
 	cCmbType.InsertString(1, "教师");
-	cCmbType.SetCurSel(0);
+	cCmbType.SetCurSel(0);	//初始无选择
+	//---------连接至数据库---------
 	sta = InitMySQL(&host);//连接MySQL数据库
 	if (sta == TRUE) {
+		//---------获得班级信息---------
 		mysql_query(&host.mysql, "Select `Name` from `Grade` order by `ID`;");
 		result = mysql_store_result(&host.mysql);
 		if (result != NULL)
@@ -96,7 +99,7 @@ BOOL NewUser::OnInitDialog()
 			j = 0;
 		for (; cCmbGrade.DeleteString(0) == 1;);//删除初始内容
 		for (i = 0; i < j; i++) {
-			row = mysql_fetch_row(result);
+			row = mysql_fetch_row(result);	//显示班级信息
 			cCmbGrade.InsertString(i, row[0]);
 		}
 		mysql_free_result(result);
@@ -108,25 +111,29 @@ BOOL NewUser::OnInitDialog()
 
 void NewUser::OnBnClickedCmdok()
 {
+	//注册新用户
 	// TODO: 在此添加控件通知处理程序代码
-	char Type[72];
-	char Grade[72];
-	char No[72];
-	char Name[72];
-	char Pwd1[72];
-	char Pwd2[72];
-	int  right;
-	int  opID;
+	char Type[72];	//学生/教师
+	char Grade[72];	//班级
+	char No[72];	//学号
+	char Name[72];	//姓名
+	char Pwd1[72];	//密码
+	char Pwd2[72];	//重复密码
+	int  right;		//权限
+	int  opID;		//内部ID
+	//---------获得申请种类---------
 	cCmbType.GetWindowTextA(Type, sizeof(Type));
 	if (strcmp(Type, "学生") == 0)
 		right = 0;	//0--学生申请
 	else
 		right = 2;	//2--教师申请
+	//---------获得申请班级--------
 	cCmbGrade.GetWindowTextA(Grade, sizeof(Grade));
 	if (strlen(Grade) < 1) {
 		MessageBoxA("请选择班级");
 		return;
 	}
+	//---------检验信息合理性--------
 	cTxtNo.GetWindowTextA(No, sizeof(No));
 	if (strlen(No) < 4) {
 		MessageBoxA("学号至少4位");
@@ -159,7 +166,7 @@ void NewUser::OnBnClickedCmdok()
 		MessageBoxA("两次输入的密码应一致");
 		return;
 	}
-
+	//---------连接至数据库---------
 	MySQLHostVariable host;
 	MYSQL_RES *result;
 	MYSQL_ROW row;
@@ -170,6 +177,7 @@ void NewUser::OnBnClickedCmdok()
 	char cmd[256];
 	sta = InitMySQL(&host);//连接MySQL数据库
 	if (sta == TRUE) {
+		//---------以班级为索引---------
 		sprintf_s(cmd, sizeof(cmd), "Select `ID` from `Grade` Where `Name`='%s'", Grade);
 		mysql_query(&host.mysql, cmd);
 		result = mysql_store_result(&host.mysql);
@@ -188,7 +196,7 @@ void NewUser::OnBnClickedCmdok()
 		row = mysql_fetch_row(result);
 		GradeID = atoi(row[0]);
 		mysql_free_result(result);
-
+		//---------以学号为索引---------
 		sprintf_s(cmd, sizeof(cmd), "Select `ID` from `Operator` Where `No`='%s'", No);
 		mysql_query(&host.mysql, cmd);
 		result = mysql_store_result(&host.mysql);
@@ -205,7 +213,7 @@ void NewUser::OnBnClickedCmdok()
 			return;
 		}
 		mysql_free_result(result);
-
+		//---------上传至数据库---------
 		pwd = PwdCode(Name, Pwd1);
 		if (right == 0) {	//申请学生用户
 			sprintf_s(cmd, sizeof(cmd), "Insert Into `Operator` (`Grade`,`No`,`User`,`Password`,`right`)"
@@ -231,5 +239,5 @@ void NewUser::OnBnClickedCmdok()
 			MessageBoxA("注册失败");
 		CloseMySQL(&host);	//关闭MySQL连接	
 	}
-	CDialogEx::OnOK();
+	CDialogEx::OnOK();	//关闭窗口
 }

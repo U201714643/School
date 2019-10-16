@@ -29,8 +29,8 @@ typedef struct adminlocal {	//admin窗体共用变量
 }adminlocal;
 
 
-extern global gs;
-adminlocal AWinInf;
+extern global gs;	//登录者信息
+adminlocal AWinInf;	//管理员窗口信息
 
 
 // admin 对话框
@@ -170,6 +170,7 @@ BOOL Admin::OnInitDialog()
 
 void Admin::OnBatchQuestions()
 {
+	//批量添加题目
 	// TODO: 在此添加命令处理程序代码
 	ComobRet CmbRet;
 	Combo SelCourse;
@@ -242,6 +243,7 @@ void Admin::OnBatchQuestions()
 
 void Admin::OnTvnSelchangedTree(NMHDR *pNMHDR, LRESULT *pResult)
 {
+	//响应左侧点击
 	LPNMTREEVIEW pNMTreeView = reinterpret_cast<LPNMTREEVIEW>(pNMHDR);
 	// TODO: 在此添加控件通知处理程序代码
 	HTREEITEM hItem, ItemP;
@@ -519,7 +521,7 @@ void Admin::OnBnClickedCmdok()
 	CDialogEx::OnOK();
 }
 
-int BatchAddQuestions(void) {
+int BatchAddQuestions(void) {	//批量添加题目
 	MySQLHostVariable host;
 	FILE *fp = NULL;
 	char cmd[256];
@@ -568,7 +570,7 @@ int BatchAddQuestions(void) {
 
 
 
-int BatchAddUser(void) {
+int BatchAddUser(void) {	//批量添加用户
 	MySQLHostVariable host;
 	FILE *fp = NULL;
 	char cmd[256];
@@ -617,6 +619,7 @@ int BatchAddUser(void) {
 
 void Admin::OnBnClickedCmdbatch()
 {
+	//上方导入文件
 	// TODO: 在此添加控件通知处理程序代码
 	//---------决定上方按钮的功能---------
 	if (AWinInf.WorkMode == WMOper)
@@ -639,6 +642,7 @@ void Admin::OnNMKillfocusTree(NMHDR *pNMHDR, LRESULT *pResult)
 
 void Admin::OnBnClickedCmdclrpwd()
 {
+	//恢复密码为学号
 	// TODO: 在此添加控件通知处理程序代码
 	char cmd[200];
 	POSITION pos;
@@ -680,6 +684,7 @@ void Admin::OnBnClickedCmdclrpwd()
 
 void Admin::OnBnClickedCmddel()
 {
+	//删除记录
 	// TODO: 在此添加控件通知处理程序代码
 	char cmd[200];
 	POSITION pos;
@@ -750,6 +755,7 @@ void Admin::OnBnClickedCmddel()
 
 void Admin::OnmnuNewPwd()
 {
+	//打开修改密码窗口
 	// TODO: 在此添加命令处理程序代码
 	NewPwd f;	//修改密码窗口
 	f.DoModal();
@@ -758,6 +764,7 @@ void Admin::OnmnuNewPwd()
 
 void Admin::OnApprovalUser()
 {
+	//打开批准申请窗口
 	// TODO: 在此添加命令处理程序代码
 	Approval f;	//认证窗口
 	f.DoModal();
@@ -766,6 +773,7 @@ void Admin::OnApprovalUser()
 
 void Admin::OnmnuAutoApproval()
 {
+	//自动批准申请
 	// TODO: 在此添加命令处理程序代码
 	CMenu *mnu = GetMenu();
 	UINT sta = GetMenuState(mnu->m_hMenu, ID_mnuAutoApproval, MF_BYCOMMAND);
@@ -783,6 +791,7 @@ void Admin::OnmnuAutoApproval()
 
 void Admin::OnTimer(UINT_PTR nIDEvent)
 {
+	//自动批准申请
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	MySQLHostVariable host;
 	int sta;	//状态标志
@@ -825,6 +834,7 @@ void Admin::Onmnuteacher()
 
 void Admin::OnBnClickedCmdapprovaltask()
 {
+	//批准教学分工申请
 	// TODO: 在此添加控件通知处理程序代码
 	char cmd[200];
 	POSITION pos;
@@ -867,6 +877,7 @@ void Admin::OnBnClickedCmdapprovaltask()
 
 void Admin::OnBnClickedCmdsave()
 {
+	// 转为文件
 	// TODO: 在此添加控件通知处理程序代码
 	CString Fn;
 	CString Fndef;
@@ -894,7 +905,7 @@ void Admin::OnBnClickedCmdsave()
 }
 
 
-int WriteListCtrl(CListCtrl *ListCtrl, char * Fn) {//表格数据写文本文件
+int WriteListCtrl(CListCtrl *ListCtrl, char * Fn) {	//表格数据写文本文件
 	int x, y;
 	int i, j;
 	char buf[72];
@@ -940,6 +951,7 @@ int WriteListCtrl(CListCtrl *ListCtrl, char * Fn) {//表格数据写文本文件
 
 void Admin::OnHdnItemclickList(NMHDR *pNMHDR, LRESULT *pResult)
 {
+	//点击表头，进行排序
 	LPNMHEADER phdr = reinterpret_cast<LPNMHEADER>(pNMHDR);
 	if (AWinInf.WorkMode == WMOper && phdr->iItem != 3) {
 		MessageBoxA("人员管理下只能按权限排序。");
@@ -959,6 +971,7 @@ void Admin::OnHdnItemclickList(NMHDR *pNMHDR, LRESULT *pResult)
 
 void Admin::OnBnClickedTestgen()
 {
+	//打开试题生成窗口
 	TestGenor t;
 	t.CourseID = AWinInf.Course;	//需根据选择的位置生成题目
 	t.DoModal();
