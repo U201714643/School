@@ -69,3 +69,8 @@ int IntFormEidt(CEdit * Edit) {	//从文本框中获得数字
 		return -1;	//我们的程序正常情况下无负数
 	return atoi(buf);
 }
+
+int MyRnd(int min, int max) {	//生成位于[min,max]之间的整数
+	int length = max - min + 1;	//注意区间长度需要加1
+	return rand() % length + min;	//区间内取数再加上起点即为范围内随机数
+}

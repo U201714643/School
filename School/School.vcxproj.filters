@@ -55,6 +55,9 @@
     <Filter Include="头文件\TestGen">
       <UniqueIdentifier>{041476c2-9e07-4ba9-916d-969436ab8c15}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\TestGen\Generator">
+      <UniqueIdentifier>{16ca1e85-014b-4719-b25e-62d580ff1be3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -108,6 +111,9 @@
     <ClInclude Include="TestGenor.h">
       <Filter>头文件\TestGen</Filter>
     </ClInclude>
+    <ClInclude Include="MyLib.h">
+      <Filter>头文件\TestGen</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -148,6 +154,15 @@
     </ClCompile>
     <ClCompile Include="TestGenor.cpp">
       <Filter>源文件\TestGen</Filter>
+    </ClCompile>
+    <ClCompile Include="Cheak.cpp">
+      <Filter>源文件\TestGen\Generator</Filter>
+    </ClCompile>
+    <ClCompile Include="ExpSum.cpp">
+      <Filter>源文件\TestGen\Generator</Filter>
+    </ClCompile>
+    <ClCompile Include="TestGen.cpp">
+      <Filter>源文件\TestGen\Generator</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

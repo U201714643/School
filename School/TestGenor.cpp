@@ -5,14 +5,11 @@
 #include "School.h"
 #include "Support.h"
 #include "TestGenor.h"
+#include "mylib.h"
 #include "afxdialogex.h"
 
 int IsOp(CButton * Edit);	//是否存在此类操作符
-
-#define EXPMAX 256
-#define FLASE 0
-#define OK 1
-#define ERROR 0
+int UpLoadQuestion(int CourseID ,ExpressionNode * ExpAddr);	//上传题目
 
 // TestGenor 对话框
 
@@ -57,6 +54,7 @@ END_MESSAGE_MAP()
 void TestGenor::OnBnClickedOk()
 {
 	ExpressionList Arguement;	//参数表
+	ExpressionNode EXP[EXPNUM] = { 0 };	//存放生成结果
 	Arguement.Repeat = FLASE;	//不允许重复
 	Arguement.EqualsNum = IntFormEidt(&Count);	//生成的表达式数目
 	Arguement.NumMax = IntFormEidt(&NumMax);	//操作数范围
@@ -91,8 +89,17 @@ void TestGenor::OnBnClickedOk()
 	//------检验操作和理性------
 	if (ArgumentCheck(&Arguement) == ERROR)
 		return;	//错误提示出现在函数中
-	Arguement.ResultMin++;
-	//CDialogEx::OnCancel();
+	//------开始生成------
+	if (TestGen(EXP, &Arguement) == OK) {
+		UpLoadQuestion(this->CourseID, EXP);	//上传
+		MessageBoxA("表达式生成成功。");
+	}
+	else {
+		UpLoadQuestion(this->CourseID, EXP);	//上传
+		MessageBoxA("表达式生成超时。\r\n只生成了数量较少的表达式。");
+	}
+	//------关闭窗口------
+	CDialogEx::OnCancel();	
 }
 
 
@@ -106,6 +113,27 @@ int IsOp(CButton * Edit){	//是否存在此类操作符
 	if (Edit->GetCheck() == true)
 		return TRUE;
 	else return FLASE;
+}
+
+int UpLoadQuestion(int CourseID, ExpressionNode * ExpAddr) {	//上传题目
+	MySQLHostVariable host;
+	FILE *fp = NULL;
+	char cmd[256];
+	char buf[EXPLEN];
+	//------连接MySQL数据库------
+	int sta = InitMySQL(&host);		
+	if (sta != TRUE)
+		return ERROR;
+	//------逐条上传------
+	for (int i = 0; ExpAddr[i].Expression[0]; i++) {	//表达式不为空字符串即继续
+		sprintf_s(buf, sizeof(buf), "%d", ExpAddr[i].Value);	//答案以字符串形式保存
+		sprintf_s(cmd, sizeof(cmd), "Insert Into `Questions` (`Course`,`Text`,`Answer`) "
+			" Values('%d','%s','%s');", CourseID, ExpAddr[i].Expression, buf);
+		mysql_query(&host.mysql, cmd);
+	}
+	//------关闭MySQL连接------
+	CloseMySQL(&host);		
+	return OK;
 }
 
 int TestGenor::ArgumentCheck(ExpressionList * Argument) {	//检验操作合理性
@@ -135,7 +163,7 @@ int TestGenor::ArgumentCheck(ExpressionList * Argument) {	//检验操作合理�
 		return ERROR;
 	}
 	//------一次性不能生成太多算式------
-	if (Argument->EqualsNum >= EXPMAX) {
+	if (Argument->EqualsNum >= EXPNUM) {
 		MessageBoxA("生成的表达式数目过多。");
 		return ERROR;
 	}
@@ -161,6 +189,11 @@ int TestGenor::ArgumentCheck(ExpressionList * Argument) {	//检验操作合理�
 	//------运算符至少有一个------
 	if (Argument->OpCount == 0) {
 		MessageBoxA("运算符至少有一个。");
+		return ERROR;
+	}
+	//------运算符只有一个时不能含有括号------
+	if (Argument->OpCount == 1 && Argument->KuoHao == TRUE) {
+		MessageBoxA("运算符只有一个时表达式中不能含有括号。");
 		return ERROR;
 	}
 	return OK;

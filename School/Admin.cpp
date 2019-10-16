@@ -914,5 +914,7 @@ void Admin::OnHdnItemclickList(NMHDR *pNMHDR, LRESULT *pResult)
 void Admin::OnBnClickedTestgen()
 {
 	TestGenor t;
+	t.CourseID = AWinInf.Course;	//需根据选择的位置生成题目
 	t.DoModal();
+	ChMode(AWinInf.WorkMode, 0, 0);	//生成后刷新页面
 }

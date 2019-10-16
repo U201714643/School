@@ -107,6 +107,7 @@
     <ClInclude Include="admin.h" />
     <ClInclude Include="Approval.h" />
     <ClInclude Include="Combo.h" />
+    <ClInclude Include="MyLib.h" />
     <ClInclude Include="NewPwd.h" />
     <ClInclude Include="NewUser.h" />
     <ClInclude Include="Resource.h" />
@@ -122,7 +123,9 @@
   <ItemGroup>
     <ClCompile Include="Admin.cpp" />
     <ClCompile Include="Approval.cpp" />
+    <ClCompile Include="Cheak.cpp" />
     <ClCompile Include="Combo.cpp" />
+    <ClCompile Include="ExpSum.cpp" />
     <ClCompile Include="MySqlOperation.cpp" />
     <ClCompile Include="NewPwd.cpp" />
     <ClCompile Include="NewUser.cpp" />
@@ -135,6 +138,7 @@
     <ClCompile Include="Students.cpp" />
     <ClCompile Include="Support.cpp" />
     <ClCompile Include="Teacher.cpp" />
+    <ClCompile Include="TestGen.cpp" />
     <ClCompile Include="TestGenor.cpp" />
   </ItemGroup>
   <ItemGroup>

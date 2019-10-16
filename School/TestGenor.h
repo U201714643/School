@@ -1,22 +1,8 @@
 ﻿#pragma once
 #include "afxwin.h"
+#include "mylib.h"
 
 // TestGenor 对话框
-
-
-typedef struct ExpressionList {	//生成表达式使用的参数表
-	int EqualsNum;	//生成的表达式数目
-	int OpCount;	//操作符数目
-	int OpTypeMin;	//操作符种类范围
-	int OpTypeMax;	//操作符种类范围
-	int NumMin;		//操作数范围
-	int NumMax;		//操作数范围
-	int ResultMin;	//结果范围
-	int ResultMax;	//结果范围
-	int KuoHao;		//是否允许括号
-	int Repeat;		//是否允许重复
-};
-
 
 class TestGenor : public CDialogEx
 {
@@ -39,6 +25,7 @@ public:
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedCancel();
 	int ArgumentCheck(ExpressionList * Argument);	//检验参数合理性
+	int CourseID;	//当前课程ID
 	CEdit Count;
 	CEdit NumMin;
 	CEdit NumMax;
