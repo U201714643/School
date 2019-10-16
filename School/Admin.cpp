@@ -117,12 +117,11 @@ BOOL Admin::OnInitDialog()
 	//  执行此操作
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
-
-	// TODO: 在此添加额外的初始化代码
+	//--------显示姓名---------
 	char buf[72];
 	sprintf_s(buf, sizeof(buf), "欢迎%s管理员", gs.op.Name);
 	SetWindowTextA(buf);
-
+	//---------连接数据库---------
 	MySQLHostVariable host;
 	MYSQL_RES *result;
 	MYSQL_ROW row;
@@ -130,8 +129,8 @@ BOOL Admin::OnInitDialog()
 	int sta;	//状态标志
 	int i, j;
 	sta = InitMySQL(&host);//连接MySQL数据库
-
-	AWinInf.hTreeItemSchool = cTree.InsertItem("学校", TVI_ROOT);//在根结点上添加父节点“学校”
+	//---------设置标题---------
+	AWinInf.hTreeItemSchool = cTree.InsertItem("人员管理", TVI_ROOT);//在根结点上添加父节点“学校”
 	if (sta == TRUE) {
 		AWinInf.hTreeItemGroup = cTree.InsertItem("教研组", AWinInf.hTreeItemSchool, NULL);//在“学校”结点小添加“教研组”
 		mysql_query(&host.mysql, "Select `ID`,`Name`  From `Grade` order by `ID`");
@@ -145,10 +144,9 @@ BOOL Admin::OnInitDialog()
 			hSubItem1 = cTree.InsertItem(row[1], AWinInf.hTreeItemSchool, hSubItem1);
 		}
 		mysql_free_result(result);
-
 	};
-
-	AWinInf.hTreeItemCourse = cTree.InsertItem("课程", TVI_ROOT);//在根结点上添加父节点“课程”
+	//---------设置标题---------
+	AWinInf.hTreeItemCourse = cTree.InsertItem("题库管理", TVI_ROOT);//在根结点上添加父节点“课程”
 	if (sta == TRUE) {
 		mysql_query(&host.mysql, "Select `Course`,`CourseName`  From `Course` order by `Course`");
 		result = mysql_store_result(&host.mysql);
@@ -163,7 +161,9 @@ BOOL Admin::OnInitDialog()
 		mysql_free_result(result);
 		CloseMySQL(&host);	//关闭MySQL连接	
 	};
+	//---------设置标题---------
 	AWinInf.hTreeItemManage = cTree.InsertItem("教学任务分配", TVI_ROOT);//在根结点上添加“教学任务分配”
+	//---------绘制窗体---------
 	ChMode(WMNone, 0, 0);
 	return TRUE;
 }
@@ -177,27 +177,26 @@ void Admin::OnBatchQuestions()
 	CmbRet.type = 0;//0==>Course
 	SelCourse.SetRet(&CmbRet);
 	SelCourse.DoModal();	//选择课程
-
+	//---------选择文件---------
 	if (CmbRet.sta != TRUE)	return;
 	CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY, "文本文档(*.txt)|*.txt|");//选择题目文本
 	if (dlg.DoModal() == IDOK)
 		Fn = dlg.GetPathName();
 	else
 		return;
-
+	//---------连接数据库---------
 	char cmd[128];
-
 	MySQLHostVariable host;
 	MYSQL_RES *result;
 	MYSQL_ROW row;
 	int sta;	//状态标志
 	int i, j;
 	sta = InitMySQL(&host);//连接MySQL数据库
+	//---------获得课程名称---------
 	if (sta == TRUE) {
 		sprintf_s(cmd, sizeof(cmd), "Select `Course`,`CourseName`  From `Course` Where `CourseName`='%s';", CmbRet.Sel);
 		mysql_query(&host.mysql, cmd);
 		result = mysql_store_result(&host.mysql);
-
 		if (result != NULL)
 			j = (long)result->row_count;//总数
 		else
@@ -213,9 +212,8 @@ void Admin::OnBatchQuestions()
 			CloseMySQL(&host);	//关闭MySQL连接	
 			return;
 		}
-
 	};
-
+	//---------读取文件中题目---------
 	FILE *fp = NULL;
 	char buf[1024];
 	int eq;//等号位置
@@ -228,16 +226,15 @@ void Admin::OnBatchQuestions()
 			}
 			if (buf[i] == 0x0A)
 				buf[i] = 0;
-
 		}
-
+		//---------数据库操作---------
 		if ((eq > 0) && (eq < 70) && (i - eq > 1) && (i - eq < 10)) {
 			sprintf_s(cmd, sizeof(cmd), "Insert Into `Questions` (`Course`,`Text`,`Answer`) "
 				" Values('%s','%s','%s');", CmbRet.Sel, buf, buf + eq + 1);
 			mysql_query(&host.mysql, cmd);
 		}
 	}
-
+	//---------收尾工作---------
 	fclose(fp);
 	CloseMySQL(&host);	//关闭MySQL连接	
 }
@@ -250,9 +247,11 @@ void Admin::OnTvnSelchangedTree(NMHDR *pNMHDR, LRESULT *pResult)
 	HTREEITEM hItem, ItemP;
 	CString ItemText;
 	hItem = cTree.GetSelectedItem();
+	//---------选择教师分工---------
 	if (hItem == AWinInf.hTreeItemManage) {
 		TeacherManage();	//用户点击选择教师分工
 	}
+	//---------选择题库管理---------
 	else {
 		ItemP = cTree.GetParentItem(hItem);
 		if (ItemP == AWinInf.hTreeItemCourse) {		//用户点击选择某课程
@@ -292,8 +291,9 @@ int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 	AWinInf.WorkMode = Mode;
 	ListCtrl.DeleteAllItems();
 	for (; ListCtrl.DeleteColumn(0) == TRUE;);
-
+	//---------空模式---------
 	if (AWinInf.WorkMode == WMNone) {
+		//仅仅隐藏、禁用按钮即可
 		TxtNote.SetWindowTextA("请选择");
 		TestGenorArg.ShowWindow(SW_HIDE);
 		CmdClrPwd.ShowWindow(SW_HIDE);
@@ -302,8 +302,11 @@ int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 		CmdSave.EnableWindow(FALSE);
 		cTree.EnableWindow(TRUE);
 	}
+	//---------人员管理模式---------
 	else if (AWinInf.WorkMode == WMOper) {
+		//---------控件标题---------
 		sprintf_s(buf, sizeof(buf), "%s 人员管理", AWinInf.ItemText);
+		//---------隐藏、显示按钮---------
 		TxtNote.SetWindowTextA(buf);
 		TestGenorArg.ShowWindow(SW_HIDE);
 		CmdClrPwd.ShowWindow(SW_SHOW);
@@ -355,6 +358,7 @@ int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 			n = (long)result->row_count;//总数
 		else
 			n = 0;
+		//---------绘制---------
 		for (i = 0; i < n; i++) {
 			row = mysql_fetch_row(result);
 			ListCtrl.InsertItem(i, row[0]);		//内部序号
@@ -380,10 +384,12 @@ int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 				ListCtrl.SetItemText(i, 3, "错误");
 			}
 		}
+		//---------释放空间、关闭连接---------
 		mysql_free_result(result);
 		CloseMySQL(&host);	//关闭MySQL连接	
 	}
 	else if (AWinInf.WorkMode == WMQust) {
+		//---------按钮可用性设置---------
 		sprintf_s(buf, sizeof(buf), "%s课程 题库管理", AWinInf.ItemText);
 		TxtNote.SetWindowTextA(buf);
 		TestGenorArg.ShowWindow(SW_SHOW);
@@ -392,8 +398,9 @@ int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 		CmdBatch.EnableWindow(TRUE);
 		CmdSave.EnableWindow(TRUE);
 		CmdDel.SetWindowTextA("删除题目");
-		AWinInf.Course = 0;
-		sta = InitMySQL(&host);//连接MySQL数据库
+		AWinInf.Course = 0;		//清理上次的课程信息
+		sta = InitMySQL(&host);	//连接MySQL数据库
+		//---------连接数据库---------
 		if (sta != TRUE)	return FALSE;
 		sprintf_s(cmd, sizeof(cmd), "Select `Course`,`CourseName`  From `Course` Where `CourseName`='%s';", AWinInf.ItemText);
 		mysql_query(&host.mysql, cmd);
@@ -402,7 +409,7 @@ int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 			j = (long)result->row_count;//总数
 		else
 			j = 0;
-		if (j == 1) {
+		if (j == 1) {	//课程号发生变更
 			row = mysql_fetch_row(result);
 			AWinInf.Course = atoi(row[0]);
 		}
@@ -411,7 +418,7 @@ int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 			CloseMySQL(&host);	//关闭MySQL连接
 			return FALSE;
 		}
-		//绘制表格标题
+		//---------绘制表格标题---------
 		ListCtrl.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT); //设置list风格  
 		ListCtrl.InsertColumn(0, "  ID  ", LVCFMT_CENTER, -1, -1);
 		ListCtrl.InsertColumn(1, "序  号", LVCFMT_CENTER, -1, -1);
@@ -421,6 +428,7 @@ int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 		ListCtrl.SetColumnWidth(1, 0);
 		ListCtrl.SetColumnWidth(2, 100);
 		ListCtrl.SetColumnWidth(3, 60);
+		//---------获得表格内容---------
 		sprintf_s(cmd, sizeof(cmd), "Select `ID`,`Text`,`Answer`  From `questions` "
 			" Where `course`='%d' order by `ID` ;", AWinInf.Course);
 		mysql_query(&host.mysql, cmd);
@@ -429,6 +437,7 @@ int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 			j = (long)result->row_count;//总数
 		else
 			j = 0;
+		//---------填入表格内容---------
 		for (i = 0; i < j; i++) {
 			row = mysql_fetch_row(result);
 			ListCtrl.InsertItem(i, row[0]);
@@ -438,10 +447,12 @@ int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 			ListCtrl.SetItemText(i, 2, RealChar(buf));
 			ListCtrl.SetItemText(i, 3, row[2]);
 		}
+		//---------释放空间、关闭连接---------
 		mysql_free_result(result);
 		CloseMySQL(&host);	//关闭MySQL连接
 	}
 	else if (AWinInf.WorkMode == WMManage) {
+		//---------显示、隐藏按钮---------
 		sprintf_s(buf, sizeof(buf), "教学任务分配", AWinInf.ItemText);
 		TxtNote.SetWindowTextA(buf);
 		TestGenorArg.ShowWindow(SW_HIDE);
@@ -452,9 +463,10 @@ int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 		CmdDel.SetWindowTextA("取消任务");
 		AWinInf.Course = 0;
 		AWinInf.GradeID = 0;	//只有老师才有执教权限一说
+		//---------连接数据库---------
 		sta = InitMySQL(&host);	//连接MySQL数据库
 		if (sta != TRUE)	return FALSE;
-		//绘制表格标题
+		//---------绘制表格标题---------
 		ListCtrl.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT); //设置list风格  
 		ListCtrl.InsertColumn(0, "序  号", LVCFMT_CENTER, -1, -1);
 		ListCtrl.InsertColumn(1, "姓  名", LVCFMT_CENTER, -1, -1);
@@ -464,6 +476,7 @@ int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 		ListCtrl.SetColumnWidth(1, 80);
 		ListCtrl.SetColumnWidth(2, 120);
 		ListCtrl.SetColumnWidth(3, 80);
+		//---------获得表格内容---------
 		if (CilckTime == 0) {	//初始为升序
 			sprintf_s(cmd, sizeof(cmd), "SELECT manage.ID,`user`,`Name`,manage.`Right` FROM manage "
 				" INNER JOIN operator ON manage.OperatorID = operator.ID "
@@ -476,6 +489,7 @@ int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 				" INNER JOIN grade ON manage.GradeID = grade.ID"
 				" Order By %s DESC;", RankType[CmdNum]);
 		}
+		//---------填写表格---------
 		mysql_query(&host.mysql, cmd);
 		result = mysql_store_result(&host.mysql);
 		if (result != NULL)
@@ -492,6 +506,7 @@ int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 			else
 				ListCtrl.SetItemText(i, 3, "执教中");
 		}
+		//---------获得表格内容---------
 		mysql_free_result(result);
 		CloseMySQL(&host);	//关闭MySQL连接
 	}
@@ -513,32 +528,39 @@ int BatchAddQuestions(void) {
 	int i;
 	int eq;//等号(或逗号或Tab)位置
 	long pwd;
+	//---------获得文件路径---------
 	CString Fn;
 	CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY, "文本文档(*.txt)|*.txt|");//选择题目文本
 	if (dlg.DoModal() == IDOK)
 		Fn = dlg.GetPathName();
 	else
 		return FALSE;
+	//---------连接至数据库---------
 	sta = InitMySQL(&host);//连接MySQL数据库
 	if (sta != TRUE)
 		return FALSE;
+	//---------打开文件---------
 	fopen_s(&fp, Fn, "rt");
 	for (; fgets(buf, sizeof(buf), fp) != NULL;) {
 		for (i = 0, eq = 0; buf[i] != 0; i++) {
+			//---------读至,、=、空白符---------
 			if ((buf[i] == '\t') || (buf[i] == ',') || (buf[i] == '=')) {
 				eq = i;
 				buf[i] = 0;
 			}
+			//---------读至换行---------
 			if (buf[i] == 0x0A)
 				buf[i] = 0;
 		}
+		//---------上传至数据库---------
 		if ((eq > 0) && (eq < 70) && (i - eq > 1) && (i - eq < 30)) {
-			pwd = PwdCode(buf + eq + 1, buf);
+			pwd = PwdCode(buf + eq + 1, buf);		//密码需进行一次编码
 			sprintf_s(cmd, sizeof(cmd), "Insert Into `Questions` (`Course`,`Text`,`Answer`) "
 				" Values('%d','%s','%s');", AWinInf.Course, buf, buf + eq + 1, pwd);
 			mysql_query(&host.mysql, cmd);
 		}
 	}
+	//---------获得表格内容---------
 	fclose(fp);
 	CloseMySQL(&host);	//关闭MySQL连接	
 	return TRUE;
@@ -555,32 +577,39 @@ int BatchAddUser(void) {
 	int i;
 	int eq;//等号(或逗号或Tab)位置
 	long pwd;
+	//---------获得文件路径---------
 	CString Fn;
 	CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY, "学生名单文本文档(*名单.txt)|*名单.txt|");//选择学生名单文本
 	if (dlg.DoModal() == IDOK)
 		Fn = dlg.GetPathName();
 	else
 		return FALSE;
+	//---------连接至数据库---------
 	sta = InitMySQL(&host);//连接MySQL数据库
 	if (sta != TRUE)
 		return FALSE;
+	//---------打开文件---------
 	fopen_s(&fp, Fn, "rt");
 	for (; fgets(buf, sizeof(buf), fp) != NULL;) {
 		for (i = 0, eq = 0; buf[i] != 0; i++) {
+			//---------读至,、=、空白符---------
 			if ((buf[i] == '\t') || (buf[i] == ',') || (buf[i] == '=')) {
 				eq = i;
 				buf[i] = 0;
 			}
+			//---------读至换行---------
 			if (buf[i] == 0x0A)
 				buf[i] = 0;
 		}
+		//---------上传至数据库---------
 		if ((eq > 0) && (eq < 70) && (i - eq > 1) && (i - eq < 30)) {
-			pwd = PwdCode(buf + eq + 1, buf);
+			pwd = PwdCode(buf + eq + 1, buf);	//密码需进行一次编码
 			sprintf_s(cmd, sizeof(cmd), "Insert Into `operator` (`Grade`,`No`,`User`,`Password`,`right`) "
 				" Values('%d','%s','%s','%ld','1');", AWinInf.GradeID, buf, buf + eq + 1, pwd);
 			mysql_query(&host.mysql, cmd);
 		}
 	}
+	//---------获得表格内容---------
 	fclose(fp);
 	CloseMySQL(&host);	//关闭MySQL连接	
 	return TRUE;
@@ -589,14 +618,14 @@ int BatchAddUser(void) {
 void Admin::OnBnClickedCmdbatch()
 {
 	// TODO: 在此添加控件通知处理程序代码
-
+	//---------决定上方按钮的功能---------
 	if (AWinInf.WorkMode == WMOper)
-		BatchAddUser();
+		BatchAddUser();		//人员管理下为添加人员
 	else if (AWinInf.WorkMode == WMQust)
-		BatchAddQuestions();
+		BatchAddQuestions();//题库管理下为添加题目
 	else
 		MessageBoxA("无效命令");
-	ChMode(AWinInf.WorkMode, 0, 0);
+	ChMode(AWinInf.WorkMode, 0, 0);		//刷新
 }
 
 
@@ -614,6 +643,7 @@ void Admin::OnBnClickedCmdclrpwd()
 	char cmd[200];
 	POSITION pos;
 	int i;
+	//---------获得选择人数---------
 	pos = ListCtrl.GetFirstSelectedItemPosition();
 	for (i = 0; ListCtrl.GetNextSelectedItem(pos) >= 0; i++);
 	if (i < 1) {
@@ -623,8 +653,8 @@ void Admin::OnBnClickedCmdclrpwd()
 	sprintf_s(cmd, sizeof(cmd), "确认要恢复%d人的默认密码？\n(默认密码为学号)", i);
 	i = MessageBoxA(cmd, "确认", MB_YESNO);
 	if (i != IDYES)
-		return;
-
+		return;		//取消
+	//---------连接至数据库---------
 	MySQLHostVariable host;
 	long pwd;
 	int sta;	//状态标志
@@ -633,10 +663,12 @@ void Admin::OnBnClickedCmdclrpwd()
 	if (sta == TRUE) {
 		pos = ListCtrl.GetFirstSelectedItemPosition();
 		for (; (i = ListCtrl.GetNextSelectedItem(pos)) >= 0;) {
+			//---------恢复密码为学号---------
 			ListCtrl.GetItemText(i, 0, ID, sizeof(ID));
 			ListCtrl.GetItemText(i, 1, no, sizeof(no));
 			ListCtrl.GetItemText(i, 2, user, sizeof(user));
 			pwd = PwdCode(user, no);
+			//---------上传至数据库---------
 			sprintf_s(cmd, sizeof(cmd), "Update `operator` Set `password`='%ld' Where `ID`='%s';", pwd, ID);
 			mysql_query(&host.mysql, cmd);
 		}
@@ -652,6 +684,7 @@ void Admin::OnBnClickedCmddel()
 	char cmd[200];
 	POSITION pos;
 	int i;
+	//---------获得选择人数---------
 	pos = ListCtrl.GetFirstSelectedItemPosition();
 	for (i = 0; ListCtrl.GetNextSelectedItem(pos) >= 0; i++);
 	if (i < 1) {
@@ -660,6 +693,7 @@ void Admin::OnBnClickedCmddel()
 	}
 	//#define WMOper 1	//工作模式-学员管理
 	//#define WMQust 2	//工作模式-题库管理
+	//---------根据模式选择删除什么---------
 	if (AWinInf.WorkMode == WMOper)
 		sprintf_s(cmd, sizeof(cmd), "确认要删除%d人信息吗？", i);
 	else if (AWinInf.WorkMode == WMQust)
@@ -670,7 +704,8 @@ void Admin::OnBnClickedCmddel()
 		return;
 	i = MessageBoxA(cmd, "确认", MB_YESNO);
 	if (i != IDYES)
-		return;
+		return;	//取消
+	//---------连接至数据库---------
 	MySQLHostVariable host;
 	int sta;	//状态标志
 	char ID[72];
@@ -678,6 +713,7 @@ void Admin::OnBnClickedCmddel()
 	if (sta == TRUE) {
 		pos = ListCtrl.GetFirstSelectedItemPosition();
 		if (AWinInf.WorkMode == WMOper) {
+			//---------删除人员---------
 			for (; (i = ListCtrl.GetNextSelectedItem(pos)) >= 0;) {
 				ListCtrl.GetItemText(i, 0, ID, sizeof(ID));
 				sprintf_s(cmd, sizeof(cmd), "Delete From `operator` Where `ID`='%s';", ID);
@@ -687,6 +723,7 @@ void Admin::OnBnClickedCmddel()
 			MessageBoxA("已删除", "提示");
 		}
 		else if (AWinInf.WorkMode == WMQust) {
+			//---------删除题目---------
 			for (; (i = ListCtrl.GetNextSelectedItem(pos)) >= 0;) {
 				ListCtrl.GetItemText(i, 0, ID, sizeof(ID));
 				sprintf_s(cmd, sizeof(cmd), "Delete From `questions` Where `ID`='%s';", ID);
@@ -695,6 +732,7 @@ void Admin::OnBnClickedCmddel()
 			MessageBoxA("已删除", "提示");
 		}
 		else if (AWinInf.WorkMode == WMManage) {
+			//---------删除管理关系---------
 			for (; (i = ListCtrl.GetNextSelectedItem(pos)) >= 0;) {
 				ListCtrl.GetItemText(i, 0, ID, sizeof(ID));
 				sprintf_s(cmd, sizeof(cmd), "Delete From `Manage` Where `ID`='%s';", ID);
@@ -706,14 +744,14 @@ void Admin::OnBnClickedCmddel()
 			MessageBoxA("无效命令未执行", "提示");
 		CloseMySQL(&host);	//关闭MySQL连接	
 	}
-	ChMode(AWinInf.WorkMode, 0, 0);
+	ChMode(AWinInf.WorkMode, 0, 0);	//刷新页面
 }
 
 
 void Admin::OnmnuNewPwd()
 {
 	// TODO: 在此添加命令处理程序代码
-	NewPwd f;
+	NewPwd f;	//修改密码窗口
 	f.DoModal();
 }
 
@@ -721,7 +759,7 @@ void Admin::OnmnuNewPwd()
 void Admin::OnApprovalUser()
 {
 	// TODO: 在此添加命令处理程序代码
-	Approval f;
+	Approval f;	//认证窗口
 	f.DoModal();
 }
 
@@ -731,11 +769,11 @@ void Admin::OnmnuAutoApproval()
 	// TODO: 在此添加命令处理程序代码
 	CMenu *mnu = GetMenu();
 	UINT sta = GetMenuState(mnu->m_hMenu, ID_mnuAutoApproval, MF_BYCOMMAND);
-	if (sta == MF_CHECKED) {
+	if (sta == MF_CHECKED) {	//没选
 		sta = 0;
 		KillTimer(1);	//停止计时器
 	}
-	else {
+	else {	//选上了
 		sta = MF_CHECKED;
 		SetTimer(1, 10000, NULL);	//10秒定时器。每十秒自动批准一次
 	}
@@ -791,6 +829,7 @@ void Admin::OnBnClickedCmdapprovaltask()
 	char cmd[200];
 	POSITION pos;
 	int i, j;
+	//---------获得选择人数---------
 	pos = ListCtrl.GetFirstSelectedItemPosition();
 	for (i = 0; ListCtrl.GetNextSelectedItem(pos) >= 0; i++);
 	if (i < 1) {
@@ -800,7 +839,8 @@ void Admin::OnBnClickedCmdapprovaltask()
 	sprintf_s(cmd, sizeof(cmd), "确认要批准%d条教学任务？", i);
 	i = MessageBoxA(cmd, "确认", MB_YESNO);
 	if (i != IDYES)
-		return;
+		return;	//取消
+	//---------连接至数据库---------
 	MySQLHostVariable host;
 	int sta;	//状态标志
 	char ID[72];
@@ -808,6 +848,7 @@ void Admin::OnBnClickedCmdapprovaltask()
 	if (sta == TRUE) {
 		pos = ListCtrl.GetFirstSelectedItemPosition();
 		for (j = 0; (i = ListCtrl.GetNextSelectedItem(pos)) >= 0;) {
+			//---------上传至数据库---------
 			ListCtrl.GetItemText(i, 0, ID, sizeof(ID));
 			sprintf_s(cmd, sizeof(cmd), "Update `Manage` Set `Right`='1' Where `ID`='%s';", ID);
 			mysql_query(&host.mysql, cmd);
@@ -829,6 +870,7 @@ void Admin::OnBnClickedCmdsave()
 	// TODO: 在此添加控件通知处理程序代码
 	CString Fn;
 	CString Fndef;
+	//---------自动设置文件名---------
 	if (AWinInf.WorkMode == WMOper)
 		Fndef = "学生名单.xls";
 	else if (AWinInf.WorkMode == WMQust)
@@ -839,6 +881,7 @@ void Admin::OnBnClickedCmdsave()
 		MessageBoxA("无效命令");
 		return;
 	}
+	//---------获得文件路径---------
 	CFileDialog dlg(FALSE, NULL, Fndef, OFN_HIDEREADONLY, "Excel文件(*.XLS)|*.XLS|");//选择导出文本文件
 	if (dlg.DoModal() == IDOK)
 		Fn = dlg.GetPathName();
@@ -846,7 +889,7 @@ void Admin::OnBnClickedCmdsave()
 		return;
 	if (WriteListCtrl(&ListCtrl, Fn.GetBuffer()) == TRUE)
 		MessageBoxA("文件导出成功");
-	else
+	else  //文件打开失败
 		MessageBoxA("导出失败，请关闭目标文件后再试");
 }
 
@@ -858,12 +901,14 @@ int WriteListCtrl(CListCtrl *ListCtrl, char * Fn) {//表格数据写文本文件
 	CHeaderCtrl*   pHeaderCtrl;
 	HDITEM Item;
 	FILE *fp = NULL;
+	//---------打开文件---------
 	if (fopen_s(&fp, Fn, "wt") != 0)
 		return FALSE;
 	pHeaderCtrl = ListCtrl->GetHeaderCtrl();
 	if (pHeaderCtrl == NULL)
 		return FALSE;
-	x = pHeaderCtrl->GetItemCount();
+	x = pHeaderCtrl->GetItemCount();	//计数
+	//---------写文件---------
 	for (i = 0; i < x; i++) {
 		memset(&Item, 0, sizeof(Item));
 		Item.mask = HDI_TEXT;
@@ -873,9 +918,10 @@ int WriteListCtrl(CListCtrl *ListCtrl, char * Fn) {//表格数据写文本文件
 		if (i == 0)
 			fprintf(fp, "\"%s\"", buf);
 		else
-			fprintf(fp, "\t\"%s\"", buf);
+			fprintf(fp, "\t\"%s\"", buf);	//表格可以用制表符来分隔
 	}
-	fprintf(fp, "\n", buf);
+	fprintf(fp, "\n", buf);	//换行
+	//---------写文件---------
 	y = ListCtrl->GetItemCount();
 	for (i = 0; i < y; i++) {
 		for (j = 0; j < x; j++) {
@@ -887,7 +933,7 @@ int WriteListCtrl(CListCtrl *ListCtrl, char * Fn) {//表格数据写文本文件
 		}
 		fprintf(fp, "\n", buf);
 	}
-	fclose(fp);
+	fclose(fp);		//关闭文件
 	return TRUE;
 }
 
