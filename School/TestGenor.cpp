@@ -7,22 +7,12 @@
 #include "TestGenor.h"
 #include "afxdialogex.h"
 
-typedef struct ExpressionList {	//生成表达式使用的参数表
-	int EqualsNum;	//生成的表达式数目
-	int OpCount;	//操作符数目
-	int OpTypeMin;	//操作符种类范围
-	int OpTypeMax;	//操作符种类范围
-	int NumMin;		//操作数范围
-	int NumMax;		//操作数范围
-	int ResultMin;	//结果范围
-	int ResultMax;	//结果范围
-	int KuoHao;		//是否允许括号
-	int Repeat;		//是否允许重复
-};
-
 int IsOp(CButton * Edit);	//是否存在此类操作符
 
+#define EXPMAX 256
 #define FLASE 0
+#define OK 1
+#define ERROR 0
 
 // TestGenor 对话框
 
@@ -94,7 +84,15 @@ void TestGenor::OnBnClickedOk()
 			break;
 		}
 	}
+	if (OpCheck[0] + OpCheck[1] + OpCheck[2] + OpCheck[3] == 0) {	//这代表一个都没选
+		MessageBoxA("请选择操作符。");
+		return;
+	}
+	//------检验操作和理性------
+	if (ArgumentCheck(&Arguement) == ERROR)
+		return;	//错误提示出现在函数中
 	Arguement.ResultMin++;
+	//CDialogEx::OnCancel();
 }
 
 
@@ -108,4 +106,62 @@ int IsOp(CButton * Edit){	//是否存在此类操作符
 	if (Edit->GetCheck() == true)
 		return TRUE;
 	else return FLASE;
+}
+
+int TestGenor::ArgumentCheck(ExpressionList * Argument) {	//检验操作合理性
+	//------各参数均需填写（即均不为负）------	
+	if (Argument->EqualsNum < 0) {
+		MessageBoxA("请填写需要生成的表达式数目。");
+		return ERROR;
+	}
+	if (Argument->NumMin < 0) {
+		MessageBoxA("请填写操作数最小值。");
+		return ERROR;
+	}
+	if (Argument->NumMax < 0) {
+		MessageBoxA("请填写操作数最大值。");
+		return ERROR;
+	}	
+	if (Argument->OpCount < 0) {
+		MessageBoxA("请填写需要生成的表达式中运算符数目。");
+		return ERROR;
+	}
+	if (Argument->ResultMin < 0) {
+		MessageBoxA("请填写运算结果最小值。");
+		return ERROR;
+	}
+	if (Argument->ResultMax < 0) {
+		MessageBoxA("请填写运算结果最大值。");
+		return ERROR;
+	}
+	//------一次性不能生成太多算式------
+	if (Argument->EqualsNum >= EXPMAX) {
+		MessageBoxA("生成的表达式数目过多。");
+		return ERROR;
+	}
+	//------最小值不能超过最大值------
+	if (Argument->NumMax < Argument->NumMin) {
+		MessageBoxA("操作数最大值不能小于最小值。");
+		return ERROR;
+	}
+	if (Argument->ResultMax < Argument->ResultMin) {
+		MessageBoxA("结果最大值不能小于最小值。");
+		return ERROR;
+	}
+	//------小学1~3年级处理不超过4位数------
+	if (Argument->NumMax >= 10000 || Argument->ResultMax >= 10000) {
+		MessageBoxA("小学1~3年级处理不超过4位数。");
+		return ERROR;
+	}
+	//------运算符不超过4个------
+	if (Argument->OpCount > 4) {
+		MessageBoxA("小学1~3年级处理不超过4个运算符。");
+		return ERROR;
+	}
+	//------运算符至少有一个------
+	if (Argument->OpCount == 0) {
+		MessageBoxA("运算符至少有一个。");
+		return ERROR;
+	}
+	return OK;
 }

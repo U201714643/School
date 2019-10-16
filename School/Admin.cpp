@@ -57,7 +57,7 @@ void Admin::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CmdDel, CmdDel);
 	DDX_Control(pDX, IDC_CmdBatch, CmdBatch);
 	DDX_Control(pDX, IDC_CmdSave, CmdSave);
-	DDX_Control(pDX, IDC_TESTGEN, TestGener);
+	DDX_Control(pDX, IDC_TESTGEN, TestGenorArg);
 }
 
 
@@ -295,7 +295,7 @@ int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 
 	if (AWinInf.WorkMode == WMNone) {
 		TxtNote.SetWindowTextA("请选择");
-		TestGener.ShowWindow(SW_HIDE);
+		TestGenorArg.ShowWindow(SW_HIDE);
 		CmdClrPwd.ShowWindow(SW_HIDE);
 		CmdApprovalTask.ShowWindow(SW_HIDE);
 		CmdBatch.EnableWindow(FALSE);
@@ -305,7 +305,7 @@ int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 	else if (AWinInf.WorkMode == WMOper) {
 		sprintf_s(buf, sizeof(buf), "%s 人员管理", AWinInf.ItemText);
 		TxtNote.SetWindowTextA(buf);
-		TestGener.ShowWindow(SW_HIDE);
+		TestGenorArg.ShowWindow(SW_HIDE);
 		CmdClrPwd.ShowWindow(SW_SHOW);
 		CmdApprovalTask.ShowWindow(SW_HIDE);
 		CmdBatch.EnableWindow(TRUE);
@@ -386,7 +386,7 @@ int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 	else if (AWinInf.WorkMode == WMQust) {
 		sprintf_s(buf, sizeof(buf), "%s课程 题库管理", AWinInf.ItemText);
 		TxtNote.SetWindowTextA(buf);
-		TestGener.ShowWindow(SW_SHOW);
+		TestGenorArg.ShowWindow(SW_SHOW);
 		CmdClrPwd.ShowWindow(SW_HIDE);
 		CmdApprovalTask.ShowWindow(SW_HIDE);
 		CmdBatch.EnableWindow(TRUE);
@@ -444,7 +444,7 @@ int Admin::ChMode(int Mode,int CmdNum,int CilckTime) {//改变工作模式
 	else if (AWinInf.WorkMode == WMManage) {
 		sprintf_s(buf, sizeof(buf), "教学任务分配", AWinInf.ItemText);
 		TxtNote.SetWindowTextA(buf);
-		TestGener.ShowWindow(SW_HIDE);
+		TestGenorArg.ShowWindow(SW_HIDE);
 		CmdClrPwd.ShowWindow(SW_HIDE);
 		CmdApprovalTask.ShowWindow(SW_SHOW);
 		CmdBatch.EnableWindow(FALSE);

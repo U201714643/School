@@ -52,6 +52,6 @@ public:
 	afx_msg void OnBnClickedCmdsave();
 	CButton CmdSave;
 	afx_msg void OnHdnItemclickList(NMHDR *pNMHDR, LRESULT *pResult);
-	CButton TestGener;
+	CButton TestGenorArg;
 	afx_msg void OnBnClickedTestgen();
 };
