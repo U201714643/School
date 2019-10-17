@@ -132,21 +132,23 @@ int Students::InitCmbCourse(void) {	//初始化课程下拉框
 	int i, j;
 	int Mode;	//初始化模式
 	char cmd[512];
+	//---------获得上次选择的模式---------
 	static int LastMode = -9999; //记住上次初始化模式
 	if (WinInf.ExamMode == ExamRetry)
-		Mode = 1;	//错题练习
+		Mode = ExamRetry;	//错题练习
 	else
-		Mode = 2;//全部课程
+		Mode = ExamTry;		//全部课程
 	if (Mode == LastMode)
 		return TRUE;
 	LastMode = Mode;
 	for (; ((sta = CmbCourse.DeleteString(0)) > 0););
 	//i=CmbCourse.GetCount();
+	//---------连接至数据库---------
 	sta = InitMySQL(&host);//连接MySQL数据库
 	if (sta == TRUE) {
-		if (Mode == 2)
+		if (Mode != ExamRetry)	//正常情况下查询所有课程
 			mysql_query(&host.mysql, "Select `Course`,`CourseName`  From `Course` order by `Course`");
-		else {
+		else {	//错题重做下只查询有错题的课程
 			sprintf_s(cmd, sizeof(cmd), "SELECT course.Course,course.CourseName,sum(examdetails.Error),"
 				"exam.OperatorID FROM examdetails INNER JOIN exam ON examdetails.ExamID = exam.ID "
 				"INNER JOIN course ON exam.CourseID = course.Course WHERE exam.OperatorID='%d' and "
@@ -158,6 +160,7 @@ int Students::InitCmbCourse(void) {	//初始化课程下拉框
 			j = (long)result->row_count;//总数
 		else
 			j = 0;
+		//---------显示课程信息---------
 		for (i = 0; i < j; i++) {
 			row = mysql_fetch_row(result);
 			CmbCourse.InsertString(i, row[1]);
@@ -180,35 +183,35 @@ void Students::CreateCtrl(void) {	////设定控件位置
 	RECT RectArea;//代码绘图区域
 	RECT RectCtrl;//控件绘图区域
 	int i, x, y;
-
+	//---------布置按钮---------
 	CmdSubmit.GetWindowRect(&RectItem);
-	ScreenToClient(&RectItem);//获得相对于主窗体的坐标
+	ScreenToClient(&RectItem);		//获得相对于主窗体的坐标
 	CmdReview.MoveWindow(&RectItem);//把“详情、返回”按钮放置在“提交按钮同一位置”
-
-	cList.GetWindowRect(&RectArea);//在统计表格同一区域布置答题所用4种*30个控件
-	ScreenToClient(&RectArea);//获得相对于主窗体的坐标
-
+	//---------布置题目和答题框---------
+	cList.GetWindowRect(&RectArea);	//在统计表格同一区域布置答题所用4种*30个控件
+	ScreenToClient(&RectArea);		//获得相对于主窗体的坐标
 	for (i = 0; i < 30; i++) {
-		x = i % 3; y = i / 3;
+		x = i % 3; y = i / 3;	//横向循环，纵向递增
+		//---------题目---------
 		RectCtrl.left = RectArea.left + (RectArea.right - RectArea.left) / 3 * x;
 		RectCtrl.right = RectCtrl.left + (long)((RectArea.right - RectArea.left) / 3 * 0.60);
 		RectCtrl.top = RectArea.top + (RectArea.bottom - RectArea.top) / 10 * y;
 		RectCtrl.bottom = RectCtrl.top + (long)((RectArea.bottom - RectArea.top) / 10 * 0.4);
 		if (Question[i].m_hWnd == NULL)
 			Question[i].Create("题干", ES_RIGHT, RectCtrl, this, 15000 + i);
-
+		//---------答题框---------
 		RectCtrl.left = RectCtrl.right;
 		RectCtrl.right = RectCtrl.left + (long)((RectArea.right - RectArea.left) / 3 * 0.18);	//需要放下4个数
 		if (Answer[i].m_hWnd == NULL)
 			Answer[i].Create(WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_BORDER, RectCtrl, this, 15100 + i);
 		else
 			Answer[i].SetWindowTextA("");
-
+		//---------正误---------
 		RectCtrl.left = RectCtrl.right;
 		RectCtrl.right = RectCtrl.left + (long)((RectArea.right - RectArea.left) / 3 * 0.20);
 		if (Flag[i].m_hWnd == NULL)
 			Flag[i].Create("正确", NULL, RectCtrl, this, 15200 + i);
-
+		//---------答案提示---------
 		RectCtrl.top = RectCtrl.bottom;
 		RectCtrl.bottom = RectCtrl.top + (long)((RectArea.bottom - RectArea.top) / 10 * 0.4);
 		RectCtrl.right = RectCtrl.left + (long)((RectArea.right - RectArea.left) / 3 * 0.08);
@@ -219,59 +222,64 @@ void Students::CreateCtrl(void) {	////设定控件位置
 
 void Students::OnBnClickedCmdsubmit()
 {
+	//点击提交时
 	// TODO: 在此添加控件通知处理程序代码
-	int i, c, e;
-	int mm, ss;
+	int i, CorrectCount, ErrorCount;
+	int mm, ss;		//时间
 	char buf[72];
-	KillTimer(1);
+	KillTimer(1);	//关闭计时器
 	WinInf.WorkMode = ModExamC;
-	ShowMode();
-	for (i = 0, c = 0, e = 0; i < 30; i++) {
+	ShowMode();		//刷新窗口
+	for (i = 0, CorrectCount = 0, ErrorCount = 0; i < 30; i++) {
 		if (WinInf.ques[i].ID == 0) {
+			//---------提交了自然不能再答了---------
 			Flag[i].ShowWindow(SW_HIDE);
 			Prompt[i].ShowWindow(SW_HIDE);
 			Answer[i].EnableWindow(FALSE);
 			continue;
 		}
+		//---------答案判断---------
 		Answer[i].GetWindowTextA(buf, sizeof(buf));
+		//---------未答---------
 		if ((buf[0] == 0) && ((WinInf.ExamMode == ExamTry) || (WinInf.ExamMode == ExamRetry))) {	//刷题或错题模式下的未答题目
 			Flag[i].SetWindowTextA("未答");
 			Prompt[i].ShowWindow(SW_SHOW);
 			WinInf.ques[i].Correct = 0;
 			WinInf.ques[i].Error = 0;
-
 		}
-		else {
+		else {	//---------正确---------
 			WinInf.ques[i].UserAnswer = atoi(buf);
 			if (WinInf.ques[i].UserAnswer == WinInf.ques[i].Answer) {
 				Flag[i].SetWindowTextA("正确");
 				Prompt[i].ShowWindow(SW_HIDE);
 				WinInf.ques[i].Correct = 1;
 				WinInf.ques[i].Error = 0;
-				c++;
+				CorrectCount++;
 			}
-			else {
+			else {	//---------错误或考试下未答---------
 				Flag[i].SetWindowTextA("错误");
 				Prompt[i].ShowWindow(SW_SHOW);
 				WinInf.ques[i].Correct = 0;
 				WinInf.ques[i].Error = 1;
-				e++;
+				ErrorCount++;
 			}
 		}
+		//---------提交了自然不能再答了---------
 		Flag[i].ShowWindow(SW_SHOW);
 		Answer[i].EnableWindow(FALSE);
 	}
-	WinInf.Error = e;
-	WinInf.Correct = c;
-	WinInf.ExamMs = (int)(GetTickCount() - WinInf.ExamStart);
-	if ((c + e) > 0)
-		WinInf.Score = 100.0*c / (c + e);
-	else
+	WinInf.Error = ErrorCount;		//错误计数
+	WinInf.Correct = CorrectCount;	//正确计数
+	WinInf.ExamMs = (int)(GetTickCount() - WinInf.ExamStart);	//时间
+	if ((CorrectCount + ErrorCount) > 0)
+		WinInf.Score = 100.0*CorrectCount / (CorrectCount + ErrorCount);
+	else  //防止除以0
 		WinInf.Score = 0;
+	//---------毫秒→分：秒---------
 	ss = WinInf.ExamMs / 1000;
 	mm = ss / 60;
 	ss = ss % 60;
-	sprintf_s(buf, sizeof(buf), "测试用时%d分%d秒。正确%d道，错误%d道，得分%5.2f", mm, ss, c, e, WinInf.Score);
+	sprintf_s(buf, sizeof(buf), "测试用时%d分%d秒。正确%d道，错误%d道，得分%5.2f", mm, ss, CorrectCount, ErrorCount, WinInf.Score);
 	MessageBoxA(buf, "测试结果");
 }
 

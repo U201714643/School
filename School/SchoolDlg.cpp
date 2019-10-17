@@ -12,7 +12,6 @@
 #include "NewUser.h"
 #include "Teacher.h"
 
-
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -24,14 +23,9 @@ int GetName(char * Name, int len);	//读缓存用户名
 int GetPwd(char * Pwd, int len);	//读缓存密码
 int VerifyOperator(char * name, char * pwd);	//校验用户
 
-
-global gs;	//定义且仅定义一个全局变量。
-
+global gs;	//定义且仅定义一个全局变量。：登录用户信息
 
 // CSchoolDlg 对话框
-
-
-
 
 CSchoolDlg::CSchoolDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CSchoolDlg::IDD, pParent)
@@ -157,6 +151,7 @@ void CSchoolDlg::OnBnClickedCmdquit()
 
 void CSchoolDlg::OnBnClickedCmdlogin()
 {
+	//点击登录时
 	// TODO: 在此添加控件通知处理程序代码
 	int sta;	//状态标志
 	char UserBuf[72];
@@ -215,7 +210,7 @@ void CSchoolDlg::OnBnClickedCmdlogin()
 		else
 			MessageBoxA("未定义操作员类型", "登录无效");
 	}
-	else
+	else   //密码不对
 		MessageBoxA("登录失败，请核对用户名、密码。\n如遗忘密码请与管理员联系。", "登录失败");
 }
 
@@ -226,7 +221,7 @@ int GetMySQLsta(void) {	//试连接MySQL数据库
 	int i, pwd, sta;
 	char cmd[256];
 	for (i = 0; i < 4; i++)
-	{
+	{	//至多重连4次
 		sta = InitMySQL(&host);//连接MySQL数据库
 		if (sta == TRUE)
 			break;
@@ -241,7 +236,7 @@ int GetMySQLsta(void) {	//试连接MySQL数据库
 		}
 		else
 			i = 0;
-		if (i != 1) {//如果admin用户不存在，则增加一个admin用户
+		if (i != 1) {	//如果admin用户不存在，则增加一个admin用户
 			pwd = PwdCode("admin", "admin");
 			sprintf_s(cmd, sizeof(cmd), "Insert Into `Operator` Set `No`='admin',`user`='admin',`Grade`=0,"
 				"`Password`='%d',`Right`='9';", pwd);
@@ -295,10 +290,10 @@ int VerifyOperator(char * name, char * password) {	//校验用户
 	int i;
 	sta = InitMySQL(&host);//连接MySQL数据库
 	if (sta == TRUE) {
-		pwd = PwdCode(name, password);
+		pwd = PwdCode(name, password);	//编码
 		sprintf_s(buf, sizeof(buf), "Select operator.`ID`,`Grade`,`No`,`Right`, grade.`Name` From `operator` "
 			"Left Join Grade ON operator.grade = grade.ID Where `User`='%s' And `Password`='%ld';", name, pwd);
-		mysql_query(&host.mysql, buf);
+		mysql_query(&host.mysql, buf);	//进入数据库查询
 		result = mysql_store_result(&host.mysql);
 		if (result != NULL)
 			i = (long)result->row_count;//计数
@@ -307,16 +302,16 @@ int VerifyOperator(char * name, char * password) {	//校验用户
 		if (i == 1) {
 			//校验通过，将用户数据读入全局变量gs.op中
 			row = mysql_fetch_row(result);
-			gs.op.ID = atoi(row[0]);
-			gs.op.grade = atoi(row[1]);
-			strcpy_s(gs.op.No, sizeof(gs.op.No), row[2]);
-			gs.op.right = atoi(row[3]);
+			gs.op.ID = atoi(row[0]);	//内部ID
+			gs.op.grade = atoi(row[1]);	//班级
+			strcpy_s(gs.op.No, sizeof(gs.op.No), row[2]);	//row不能修改
+			gs.op.right = atoi(row[3]);	//权限
 			strcpy_s(gs.op.Name, sizeof(gs.op.Name), name);
 			if (row[4] == NULL)	//班级名称可能无效。例如教师没有所属班级
 				gs.op.GradeName[0] = 0;	//这时候将班级名称设置为""字符串
 			else
 				strcpy_s(gs.op.GradeName, sizeof(gs.op.GradeName), row[4]);
-			gs.op.pwd = pwd;
+			gs.op.pwd = pwd;	//密码
 		}
 		else
 			sta = FALSE;
@@ -328,6 +323,7 @@ int VerifyOperator(char * name, char * password) {	//校验用户
 
 void CSchoolDlg::OnBnClickedCmdnewuser()
 {
+	//创建新用户
 	// TODO: 在此添加控件通知处理程序代码
 	NewUser f;
 	f.DoModal();
@@ -343,6 +339,7 @@ void CSchoolDlg::OnClose()
 
 void CSchoolDlg::OnBnClickedRemid()
 {
+	//点击了保存用户名按钮
 	if (RemID.GetCheck() == false) {
 		RemPwd.SetCheck(false);		//保存密码必须保存用户名
 	}
@@ -351,6 +348,7 @@ void CSchoolDlg::OnBnClickedRemid()
 
 void CSchoolDlg::OnBnClickedRmepwd()
 {
+	//点击了保存密码按钮
 	if (RemPwd.GetCheck() == true) {
 		RemID.SetCheck(true);		//保存密码必须保存用户名
 	}

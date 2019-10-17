@@ -79,8 +79,8 @@ public:
 #define  ModExamC 4	 //模式-测验后
 #define  ModReview 5 //模式-回顾
 
-#define  ExamTest    0	 //答题方式-考试
-#define  ExamTry     1   //答题方式-刷题
+#define  ExamTest   0	 //答题方式-考试
+#define  ExamTry    1	 //答题方式-刷题
 #define  ExamRetry  2	 //答题方式-错题本
 
 #define  RankNum	0	 //排序方式-时间
