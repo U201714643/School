@@ -130,40 +130,40 @@ void NewUser::OnBnClickedCmdok()
 	//---------获得申请班级--------
 	cCmbGrade.GetWindowTextA(Grade, sizeof(Grade));
 	if (strlen(Grade) < 1) {
-		MessageBoxA("请选择班级");
+		MessageBoxA("请选择班级", "提示");
 		return;
 	}
 	//---------检验信息合理性--------
 	cTxtNo.GetWindowTextA(No, sizeof(No));
 	if (strlen(No) < 4) {
-		MessageBoxA("学号至少4位");
+		MessageBoxA("学号至少4位", "提示");
 		return;
 	}
 	if (strlen(No) > 14) {
-		MessageBoxA("学号至多14位");
+		MessageBoxA("学号至多14位", "提示");
 		return;
 	}
 	cTxtName.GetWindowTextA(Name, sizeof(Name));
 	if (strlen(Name) < 4) {
-		MessageBoxA("姓名至少2个汉字");
+		MessageBoxA("姓名至少2个汉字", "提示");
 		return;
 	}
 	if (strlen(Name) > 20) {
-		MessageBoxA("姓名至多10个汉字");
+		MessageBoxA("姓名至多10个汉字", "提示");
 		return;
 	}
 	cTxtPwd1.GetWindowTextA(Pwd1, sizeof(Pwd1));
 	if (strlen(Pwd1) < 4) {
-		MessageBoxA("密码长度至少4位");
+		MessageBoxA("密码长度至少4位", "提示");
 		return;
 	}
 	if (strlen(Pwd1) > 20) {
-		MessageBoxA("密码长度至多20位");
+		MessageBoxA("密码长度至多20位", "提示");
 		return;
 	}
 	cTxtPwd2.GetWindowTextA(Pwd2, sizeof(Pwd2));
 	if (strcmp(Pwd1, Pwd2) != 0) {
-		MessageBoxA("两次输入的密码应一致");
+		MessageBoxA("两次输入的密码应一致", "提示");
 		return;
 	}
 	//---------连接至数据库---------
@@ -183,14 +183,14 @@ void NewUser::OnBnClickedCmdok()
 		result = mysql_store_result(&host.mysql);
 		if (result == NULL) {
 			CloseMySQL(&host);	//关闭MySQL连接	
-			MessageBoxA("所选班级无效,注册失败");
+			MessageBoxA("所选班级无效,注册失败", "提示");
 			return;
 		}
 		j = (long)result->row_count;//计数
 		if (j != 1) {
 			mysql_free_result(result);
 			CloseMySQL(&host);	//关闭MySQL连接	
-			MessageBoxA("选择班级无效,注册失败");
+			MessageBoxA("选择班级无效,注册失败", "提示");
 			return;
 		}
 		row = mysql_fetch_row(result);
@@ -202,14 +202,14 @@ void NewUser::OnBnClickedCmdok()
 		result = mysql_store_result(&host.mysql);
 		if (result == NULL) {
 			CloseMySQL(&host);	//关闭MySQL连接	
-			MessageBoxA("学号无效,注册失败");
+			MessageBoxA("学号/工号无效,注册失败", "提示");
 			return;
 		}
 		j = (long)result->row_count;//计数
 		if (j > 0) {
 			mysql_free_result(result);
 			CloseMySQL(&host);	//关闭MySQL连接	
-			MessageBoxA("学号已存在,注册失败");
+			MessageBoxA("学号/工号已存在,注册失败", "提示");
 			return;
 		}
 		mysql_free_result(result);
@@ -234,9 +234,9 @@ void NewUser::OnBnClickedCmdok()
 			}
 		}
 		if (j == 1)
-			MessageBoxA("注册成功");
+			MessageBoxA("注册成功", "提示");
 		else
-			MessageBoxA("注册失败");
+			MessageBoxA("注册失败", "提示");
 		CloseMySQL(&host);	//关闭MySQL连接	
 	}
 	CDialogEx::OnOK();	//关闭窗口
