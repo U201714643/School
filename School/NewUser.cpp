@@ -177,6 +177,12 @@ void NewUser::OnBnClickedCmdok()
 	char cmd[256];
 	sta = InitMySQL(&host);//连接MySQL数据库
 	if (sta == TRUE) {
+		//---------检验是否存在该用户---------
+		if (VerifyOperator(Name, Pwd1) == TRUE) {	//已验证pwd1和pwd2一致，直接使用其中一个即可
+			CloseMySQL(&host);	//关闭MySQL连接	
+			MessageBoxA("使用了已存在的用户名和密码组合。\n您可以继续使用该用户名，但需要使用另一个密码。", "提示");
+			return;
+		}
 		//---------以班级为索引---------
 		sprintf_s(cmd, sizeof(cmd), "Select `ID` from `Grade` Where `Name`='%s'", Grade);
 		mysql_query(&host.mysql, cmd);

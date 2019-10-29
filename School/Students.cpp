@@ -832,10 +832,10 @@ void Students::OnBnClickedCmdstarttest()
 			}
 			if (ReadOrSkip(i, j, 30 - m, 30, WinInf.ExamMode) == TRUE) {//决定是否读取当前记录
 				WinInf.ques[m].ID = atoi(row[0]);
-				WinInf.ques[m].course = atoi(row[1]);
+				WinInf.ques[m].CourseID = atoi(row[1]);
 				strcpy_s(WinInf.ques[m].Text, sizeof(WinInf.ques[m].Text), row[2]);
 				WinInf.ques[m].Answer = atoi(row[3]);
-				WinInf.ques[m].Answer2 = atoi(row[4]);
+				WinInf.ques[m].AnswerLeft = atoi(row[4]);
 				m++;
 			}
 		}

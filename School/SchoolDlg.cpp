@@ -21,7 +21,6 @@ int SaveName(char * Name);	//缓存用户名
 int SavePwd(char * Pwd);	//缓存密码
 int GetName(char * Name, int len);	//读缓存用户名
 int GetPwd(char * Pwd, int len);	//读缓存密码
-int VerifyOperator(char * name, char * pwd);	//校验用户
 
 global gs;	//定义且仅定义一个全局变量。：登录用户信息
 
@@ -191,19 +190,19 @@ void CSchoolDlg::OnBnClickedCmdlogin()
 			SavePwd("");
 		}
 		//--------权限认证--------
-		if (gs.op.right == 0)			//未认证
+		if (gs.op.Right == 0)			//未认证
 			MessageBoxA("学生已注册，尚未审批\n请待审批后再登录", "未审批学生");
-		else if (gs.op.right == 2)		//未认证
+		else if (gs.op.Right == 2)		//未认证
 			MessageBoxA("教师已注册，尚未审批\n请待审批后再登录", "未审批教师");
-		else if (gs.op.right == 1) {	//学生
+		else if (gs.op.Right == 1) {	//学生
 			Students frm;
 			frm.DoModal();
 		}
-		else if (gs.op.right == 3) {	//教师
+		else if (gs.op.Right == 3) {	//教师
 			Teacher frm;
 			frm.DoModal();
 		}
-		else if (gs.op.right == 9) {	//管理员
+		else if (gs.op.Right == 9) {	//管理员
 			Admin	FrmAdmin;
 			FrmAdmin.DoModal();
 		}
@@ -280,46 +279,7 @@ int SavePwd(char * Pwd) {	//缓存密码
 }
 
 
-int VerifyOperator(char * name, char * password) {	//校验用户
-	MySQLHostVariable host;
-	MYSQL_RES *result;
-	MYSQL_ROW row;
-	long pwd;
-	int sta;	//状态标志
-	char buf[200];
-	int i;
-	sta = InitMySQL(&host);//连接MySQL数据库
-	if (sta == TRUE) {
-		pwd = PwdCode(name, password);	//编码
-		sprintf_s(buf, sizeof(buf), "Select operator.`ID`,`Grade`,`No`,`Right`, grade.`Name` From `operator` "
-			"Left Join Grade ON operator.grade = grade.ID Where `User`='%s' And `Password`='%ld';", name, pwd);
-		mysql_query(&host.mysql, buf);	//进入数据库查询
-		result = mysql_store_result(&host.mysql);
-		if (result != NULL)
-			i = (long)result->row_count;//计数
-		else
-			i = 0;
-		if (i == 1) {
-			//校验通过，将用户数据读入全局变量gs.op中
-			row = mysql_fetch_row(result);
-			gs.op.ID = atoi(row[0]);	//内部ID
-			gs.op.grade = atoi(row[1]);	//班级
-			strcpy_s(gs.op.No, sizeof(gs.op.No), row[2]);	//row不能修改
-			gs.op.right = atoi(row[3]);	//权限
-			strcpy_s(gs.op.Name, sizeof(gs.op.Name), name);
-			if (row[4] == NULL)	//班级名称可能无效。例如教师没有所属班级
-				gs.op.GradeName[0] = 0;	//这时候将班级名称设置为""字符串
-			else
-				strcpy_s(gs.op.GradeName, sizeof(gs.op.GradeName), row[4]);
-			gs.op.pwd = pwd;	//密码
-		}
-		else
-			sta = FALSE;
-		mysql_free_result(result);
-		CloseMySQL(&host);	//关闭MySQL连接	
-	};
-	return sta;
-}
+
 
 void CSchoolDlg::OnBnClickedCmdnewuser()
 {

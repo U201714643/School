@@ -65,7 +65,7 @@ void TestGenor::OnBnClickedOk()
 	Arguement.KuoHao = IsOp(&IsKuoHao);	//有无括号
 	//------确定操作符种类------
 	int OpCheck[4];		//操作符种类校验
-	OpCheck[0]= IsOp(&IsJia);	//有无加号
+	OpCheck[0] = IsOp(&IsJia);	//有无加号
 	OpCheck[1] = IsOp(&IsJian);	//有无减号
 	OpCheck[2] = IsOp(&IsCheng);//有无乘号
 	OpCheck[3] = IsOp(&IsChu);	//有无除号
